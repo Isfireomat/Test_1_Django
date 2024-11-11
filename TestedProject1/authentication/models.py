@@ -1,19 +1,26 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
-
+from django.core.exceptions import ValidationError
 class User(models.Model):
     email = models.EmailField(blank=False, null=False, unique=True)
-    hashed_password = models.CharField(max_length=50, blank=False, null=False)
+    password = models.CharField(max_length=256, blank=False, null=False)
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     
+    def validate(self):
+        if not self.email:
+            raise ValidationError("Email is required")
+        if not self.password:
+            raise ValidationError("Password is required")
+
     def save(self, *args, **kwargs):
-        if self.hashed_password and not self.pk:
-            self.hashed_password = make_password(self.hashed_password)
+        self.validate()
+        if self.password and not self.pk:
+            self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
     def set_password(self, new_password: str):
-        self.hashed_password = make_password(new_password)
-        self.save() 
+        self.password = make_password(new_password)
+        self.save()
         
 class Link(models.Model):
     TYPE_URL_CHOICES = [

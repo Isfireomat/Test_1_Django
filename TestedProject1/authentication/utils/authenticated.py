@@ -2,8 +2,8 @@ from django.conf import settings
 from rest_framework.permissions import BasePermission
 from rest_framework.exceptions import AuthenticationFailed
 from datetime import datetime, timedelta, timezone
+from .jwt_utils import create_token
 import jwt
-from utils import create_token
 
 class IsAuthenticatedWithToken(BasePermission):
       def has_permission(self, request, view):
