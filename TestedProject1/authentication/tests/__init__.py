@@ -18,4 +18,19 @@ def client():
 
 @pytest.fixture
 def standart_user():
-    return {'email':'test@gmail.com', 'password':'password'}
+    return {'email':'test@gmail.com', 
+            'password':'password'}
+
+@pytest.fixture
+def standart_link():
+    return {'heading':"tested",
+            'short_description':"tested",
+            'page_url':"https://rabota.by",
+            'image':b'picture=',
+            'type_url':'website'}
+
+@pytest.fixture
+def standart_collection():
+    return {
+        'title':'test',
+        'short_description':'test'}

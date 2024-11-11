@@ -6,14 +6,8 @@ class User(models.Model):
     password = models.CharField(max_length=256, blank=False, null=False)
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     
-    def validate(self):
-        if not self.email:
-            raise ValidationError("Email is required")
-        if not self.password:
-            raise ValidationError("Password is required")
-
     def save(self, *args, **kwargs):
-        self.validate()
+        self.full_clean()
         if self.password and not self.pk:
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
@@ -37,9 +31,16 @@ class Link(models.Model):
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     change_date_time = models.DateTimeField(auto_now=True, null=False)
     
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 class Collection(models.Model):
     title = models.CharField(max_length=100, blank=False, null=False)
     short_description = models.CharField(max_length=500, blank=True)
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     change_date_time = models.DateTimeField(auto_now=True, null=False)
     
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
