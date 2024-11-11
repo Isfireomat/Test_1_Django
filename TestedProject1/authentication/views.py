@@ -1,15 +1,16 @@
 from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.urls import reverse
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from .models import User
 from .serializers import UserSerializer, PasswordResetEmailSerializer
-from utils import verify_access_token, create_token, IsAuthenticatedWithToken
+from utils import verify_access_token, create_token, \
+                  IsAuthenticatedWithToken, generate_password_reset_link 
 import jwt
+
 
 # - Пользователь должен иметь возможность зарегистрироваться (email, пароль)   
 @api_view(['POST'])
@@ -115,14 +116,11 @@ def password_reset_request(request):
                         status=status.HTTP_400_BAD_REQUEST)
     try:
         user: User = User.objects.get(email=serializer.email)    
-        token = default_token_generator(user)
         send_mail("Password Reset Request",
-                f"Click the link to reset your password: 
-                    {request.build_absolute_uri(
-                        reverse('password_reset', kwargs={'token': token})
-                    )}",
+                f"Click the link to reset your password: \n
+                  {generate_password_reset_link(request, user)}",
                 settings.DEFAULT_FROM_EMAIL,
-                [serializer.email],)
+                [user.email],)
     except User.DoesNotExist:
         return Response({"message":"User does not exist"}, 
                         status=status.HTTP_400_BAD_REQUEST)
@@ -130,23 +128,18 @@ def password_reset_request(request):
                     status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-def password_reset(request, token):
+def password_reset(request, uid, token):
     try:
-        uid = urlsafe_base64_decode(token)
         user = User.objects.get(pk=uid)
-
         if not default_token_generator.check_token(user, token):
-            raise Http404("Invalid or expired token")
-
-        if request.method == "POST":
-            form = SetPasswordForm(user, request.POST)
-            if form.is_valid():
-                form.save()  # Сохраняем новый пароль
-                return redirect('password_reset_complete')
-        else:
-            form = SetPasswordForm(user)
-        
-        return render(request, 'password_reset_form.html', {'form': form})
-
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        raise Http404("Invalid token")
+            return Response({'message':'Invalid token'}, 
+                            status=status.HTTP_400_BAD_REQUEST)
+        if not request.data['password']:
+            return Response({'message':'Invalid password'},
+                            status=status.HTTP_400_BAD_REQUEST) 
+        user.set_password(str(request.data['password']))
+        return Response({'message':'Password reset'},
+                        status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({'message':'Invalid token'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
