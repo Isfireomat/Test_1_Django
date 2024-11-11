@@ -1,3 +1,152 @@
-from django.shortcuts import render
+from datetime import datetime, timedelta, timezone
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
+from django.core.mail import send_mail
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from .models import User
+from .serializers import UserSerializer, PasswordResetEmailSerializer
+from utils import verify_access_token, create_token, IsAuthenticatedWithToken
+import jwt
 
-# Create your views here.
+# - Пользователь должен иметь возможность зарегистрироваться (email, пароль)   
+@api_view(['POST'])
+def registration(request):
+    serializer = UserSerializer(data=request.data)
+    if not serializer.is_valid(): return Response(serializer.errors, 
+                                                  status=status.HTTP_400_BAD_REQUEST)
+    user: User = serializer.create(serializer.validated_data)
+    if User.objects.filter(email=user.email).exists(): return Response({'Error':'This user is excists'}, 
+                                                           status=status.HTTP_400_BAD_REQUEST)
+    user.save()
+    return Response({'message':'User created'}, status=status.HTTP_201_CREATED)
+
+# - Пользователь должен иметь возможность аутентифицироваться
+@api_view(['POST'])
+def authenticate(request):
+    serializer = UserSerializer(data=request.data)
+    if not serializer.is_valid(): return Response(serializer.errors, 
+                                                  status=status.HTTP_401_UNAUTHORIZED)
+    user: User = serializer.create(serializer.validated_data)
+    if User.objects.filter(email=user.email).exists(): 
+        return Response({'message': 'Authentication successful'}, 
+                        status=status.HTTP_200_OK)
+    return Response({'Error':'This user is not excists'}, 
+                    status=status.HTTP_401_UNAUTHORIZED)
+    
+@api_view(['POST'])
+def get_tokens(request):
+    serializer = UserSerializer(data=request.data)
+    if not serializer.is_valid(): return Response(serializer.errors, 
+                                                  status=status.HTTP_400_BAD_REQUEST)
+    user: User = serializer.create(serializer.validated_data)
+    access_token = create_token([user.email], settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token = create_token([user.email], settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+    response: Response = Response({
+        'access_token': access_token,
+        'resfresh_toke': refresh_token
+    }, status=status.HTTP_200_OK)
+    response.set_cookie(
+            key='access_token',
+            value=f'Bearer {access_token}',
+            httponly=True,
+            secure=True,
+            samesite='lax',
+            max_age=int(settings.ACCESS_TOKEN_EXPIRE_MINUTES.total_seconds()))
+    response.set_cookie(
+            key='refresh_token',
+            value=f'Bearer {refresh_token}',
+            httponly=True,
+            secure=True,
+            samesite='lax',
+            max_age=int(settings.REFRESH_TOKEN_EXPIRE_MINUTES.total_seconds()))
+    return response    
+
+@api_view(['POST'])
+def refresh_token(request):
+    refresh_token = request.COOKIES.get('refresh_token')
+    if refresh_token:
+        if not ('Bearer' in refresh_token): 
+            return Response({'message':'Invalid refresh token type'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        token = refresh_token.split(' ')[1]    
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            if not (payload.get('exp') < datetime.now(timezone.utc).timestamp()): 
+                Response({'message':'Refresh token has expired'},
+                         status=status.HTTP_400_BAD_REQUEST)
+            new_access_token = create_token([payload.get('email')], expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+            response = Response({'new_access_token': new_access_token,
+                                 'resfresh_toke': refresh_token
+                                }, status=status.HTTP_200_OK)
+            response.set_cookie(
+                key='access_token',
+                value=f'Bearer {new_access_token}',
+                httponly=True,
+                secure=True,
+                samesite='lax',
+                max_age=int(settings.ACCESS_TOKEN_EXPIRE_MINUTES.total_seconds()))
+            return response
+        except jwt.PyJWTError:
+            raise Response({'message':'Invalid refresh token'},
+                           status=status.HTTP_400_BAD_REQUEST)
+            
+# - Пользователь должен иметь возможность сменить пароль
+@api_view(['POST'])
+@permission_classes([IsAuthenticatedWithToken])
+def change_password(request):
+    token = request.COOKIES.get("access_token")
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    user = User.objects.get(email=payload.get('email'))
+    if not request.data['password']: 
+        return Response({"message":"Password is not exists"},
+                        status=status.HTTP_400_BAD_REQUEST)
+    user.set_password(request.data['password'])
+    
+# - Пользователь должен иметь возможность сбросить пароль 
+@api_view(['POST'])
+def password_reset_request(request):
+    serializer: PasswordResetEmailSerializer = \
+        PasswordResetEmailSerializer(data=request.data)
+    if not serializer.is_valid(): 
+        return Response({"message":"Invalid email"},
+                        status=status.HTTP_400_BAD_REQUEST)
+    try:
+        user: User = User.objects.get(email=serializer.email)    
+        token = default_token_generator(user)
+        send_mail("Password Reset Request",
+                f"Click the link to reset your password: 
+                    {request.build_absolute_uri(
+                        reverse('password_reset', kwargs={'token': token})
+                    )}",
+                settings.DEFAULT_FROM_EMAIL,
+                [serializer.email],)
+    except User.DoesNotExist:
+        return Response({"message":"User does not exist"}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    return Response({"message":"Email sended"}, 
+                    status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def password_reset(request, token):
+    try:
+        uid = urlsafe_base64_decode(token)
+        user = User.objects.get(pk=uid)
+
+        if not default_token_generator.check_token(user, token):
+            raise Http404("Invalid or expired token")
+
+        if request.method == "POST":
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()  # Сохраняем новый пароль
+                return redirect('password_reset_complete')
+        else:
+            form = SetPasswordForm(user)
+        
+        return render(request, 'password_reset_form.html', {'form': form})
+
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        raise Http404("Invalid token")

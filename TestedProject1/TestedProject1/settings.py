@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,6 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-63*lqjs)p9s!+l^d+5&$yw3*$+th3+x^vj1qc0i7f8e=gtf^kl'
+ALGORITHM = 'HS256'  
+ACCESS_TOKEN_EXPIRE_MINUTES = timedelta(minutes=30) 
+REFRESH_TOKEN_EXPIRE_MINUTES = timedelta(days=7)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'authentication',
 ]
 
 MIDDLEWARE = [
