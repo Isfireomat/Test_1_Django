@@ -1,5 +1,5 @@
 from . import client
-from authentication.serializers import UserSerializer, PasswordResetEmailSerializer
+from authentication.serializers import UserSerializer, EmailSerializer
 from authentication.models import User
 
 def test_user_serializer_valid():
@@ -27,10 +27,10 @@ def test_create_user_from_serializer():
 
 def test_password_reset_email_serializer_valid():
     data = {'email': 'testuser@gmail.com'}
-    serializer = PasswordResetEmailSerializer(data=data)
+    serializer = EmailSerializer(data=data)
     assert serializer.is_valid()
 
 def test_password_reset_email_serializer_email_non_valid():
     data = {'email': 'testuser'}
-    serializer = PasswordResetEmailSerializer(data=data)
+    serializer = EmailSerializer(data=data)
     assert not serializer.is_valid()

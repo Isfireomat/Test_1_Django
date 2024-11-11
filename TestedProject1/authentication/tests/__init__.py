@@ -4,6 +4,7 @@ from django.db import connections
 from django.test import TestCase
 from django.core.management import call_command
 from rest_framework.test import APIClient
+from django.urls import reverse
 
 @pytest.fixture(scope='session')
 def db_setup():
@@ -34,3 +35,7 @@ def standart_collection():
     return {
         'title':'test',
         'short_description':'test'}
+
+@pytest.fixture
+def registration(client, standart_user):
+    client.post(reverse('registration'), standart_user, format='json')

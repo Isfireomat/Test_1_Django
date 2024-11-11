@@ -8,19 +8,20 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from .models import User
-from .serializers import UserSerializer, PasswordResetEmailSerializer
+from .serializers import UserSerializer, EmailSerializer
 from .utils import verify_access_token, create_token, \
                   IsAuthenticatedWithToken, generate_password_reset_link 
 import jwt
- 
+from django.contrib.auth.hashers import check_password
+
 @api_view(['POST'])
 def registration(request):
     serializer = UserSerializer(data=request.data)
     if not serializer.is_valid(): return Response(serializer.errors, 
                                                   status=status.HTTP_400_BAD_REQUEST)
+    user: User = serializer.create(serializer.validated_data)
     if User.objects.filter(email=user.email).exists(): return Response({'Error':'This user is excists'}, 
                                                            status=status.HTTP_400_BAD_REQUEST)
-    user: User = serializer.create(serializer.validated_data)
     user.save()
     return Response({'message':'User created'}, status=status.HTTP_201_CREATED)
 
@@ -31,9 +32,12 @@ def authenticate(request):
     if not serializer.is_valid(): return Response(serializer.errors, 
                                                   status=status.HTTP_401_UNAUTHORIZED)
     user: User = serializer.create(serializer.validated_data)
-    if not User.objects.filter(email=user.email, 
-                               password=user.password).exists(): 
+    if not User.objects.filter(email=user.email).exists(): 
         return Response({'Error':'This user is not excists'}, 
+                        status=status.HTTP_401_UNAUTHORIZED)
+    if not check_password(user.password, 
+                          User.objects.get(email=user.email).password): 
+        return Response({'Error':'Password incorrect'}, 
                         status=status.HTTP_401_UNAUTHORIZED)
     return Response({'message': 'Authentication successful'}, 
                     status=status.HTTP_200_OK)
@@ -41,15 +45,16 @@ def authenticate(request):
     
 @api_view(['POST'])
 def get_tokens(request):
-    serializer = UserSerializer(data=request.data)
+    serializer = EmailSerializer(data=request.data)
     if not serializer.is_valid(): return Response(serializer.errors, 
                                                   status=status.HTTP_400_BAD_REQUEST)
-    user: User = serializer.create(serializer.validated_data)
-    access_token = create_token([user.email], settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_token = create_token([user.email], settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+    access_token = create_token({'email':request.data['email']}, 
+                                settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token = create_token({'email':request.data['email']}, 
+                                 settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     response: Response = Response({
         'access_token': access_token,
-        'resfresh_toke': refresh_token
+        'resfresh_token': refresh_token
     }, status=status.HTTP_200_OK)
     response.set_cookie(
             key='access_token',
@@ -111,8 +116,8 @@ def change_password(request):
 
 @api_view(['POST'])
 def password_reset_request(request):
-    serializer: PasswordResetEmailSerializer = \
-        PasswordResetEmailSerializer(data=request.data)
+    serializer: EmailSerializer = \
+        EmailSerializer(data=request.data)
     if not serializer.is_valid(): 
         return Response({"message":"Invalid email"},
                         status=status.HTTP_400_BAD_REQUEST)

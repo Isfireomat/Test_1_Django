@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import User
 from django.contrib.auth.hashers import make_password
 
-class PasswordResetEmailSerializer(serializers.Serializer):
+class EmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class UserSerializer(serializers.ModelSerializer):
@@ -13,7 +13,5 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["email", "password"]
     
     def create(self, validated_data):
-        password = validated_data.pop('password')
-        validated_data['password'] = make_password(password)
         user: User = User(**validated_data)
         return user
