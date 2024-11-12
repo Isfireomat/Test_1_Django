@@ -10,6 +10,7 @@ from authentication.utils import create_token
 from django.conf import settings
 from rest_framework.exceptions import AuthenticationFailed
 from django.core import mail
+import re
 
 @pytest.mark.django_db
 def test_registration_registration(client, standart_user):
@@ -123,9 +124,22 @@ def test_change_password(client, registration, standart_user):
 
 @pytest.mark.django_db
 def test_password_reset_request(client, registration, standart_user):
-    
     response = client.post(reverse('password_reset_request'),
                            {'email':standart_user['email']},
                            form='json')
     assert response.status_code == 200
     assert len(mail.outbox) == 1
+
+@pytest.mark.django_db
+def test_password_reset(client, registration, standart_user):
+    response = client.post(reverse('password_reset_request'),
+                           {'email':standart_user['email']},
+                           form='json')
+    old_password: str = User.objects.get(email=standart_user['email']).password
+    assert response.status_code == 200
+    assert len(mail.outbox) == 1
+    url = re.search(r'http[s]?://\S+', mail.outbox[0].body).group(0)
+    response = client.post(url, {'password':'1234567890'}, form='json')
+    assert response.status_code == 200
+    new_password: str = User.objects.get(email=standart_user['email']).password
+    assert old_password != new_password

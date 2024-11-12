@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import User
 from .serializers import UserSerializer, EmailSerializer
-from .utils import verify_access_token, create_token, \
+from .utils import verify_access_token, create_token, check_token,\
                   IsAuthenticatedWithToken, generate_password_reset_link 
 import jwt
 from django.contrib.auth.hashers import check_password
@@ -133,9 +133,11 @@ def password_reset_request(request):
     try:
         user: User = User.objects.get(email=serializer.validated_data['email'])    
         send_mail("Password Reset Request",
-                f"Click the link to reset your password: {generate_password_reset_link(request, user)}",
-                settings.EMAIL_HOST_USER,
-                [user.email],)
+                    f"""Click the link to reset your password: 
+                    {generate_password_reset_link(request, user)}\n""",
+                    settings.EMAIL_HOST_USER,
+                    [user.email],
+                    fail_silently=False)
     except User.DoesNotExist:
         return Response({"message":"User does not exist"}, 
                         status=status.HTTP_400_BAD_REQUEST)
@@ -147,7 +149,7 @@ def password_reset(request, uid, token):
     try:
         uid = urlsafe_base64_decode(str(uid)).decode('utf-8')
         user = User.objects.get(pk=uid)
-        if not default_token_generator.check_token(user, token):
+        if not check_token(user, token):
             return Response({'message':'Invalid token'}, 
                             status=status.HTTP_400_BAD_REQUEST)
         if 'password' not in request.data or not request.data['password']:

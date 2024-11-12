@@ -19,7 +19,7 @@ def client():
 
 @pytest.fixture
 def standart_user():
-    return {'email':'dfdfgfgf666@gmail.com', 
+    return {'email':'test@gmail.com', 
             'password':'password'}
 
 @pytest.fixture
