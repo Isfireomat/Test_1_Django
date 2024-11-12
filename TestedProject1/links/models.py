@@ -7,9 +7,9 @@ class Link(models.Model):
     ("article", "Article"),
     ("music", "Music"),
     ("video", "Video"),]
-    heading = models.CharField(max_length=100, blank=False, null=False)
-    short_description = models.CharField(max_length=500, blank=True)
-    link = models.URLField(blank=False, null=False)
+    title = models.CharField(max_length=100, blank=False, null=False)
+    description = models.CharField(max_length=500, blank=True)
+    page_url = models.URLField(blank=False, null=False)
     image = models.BinaryField(blank=True,  null=True)
     type_url = models.CharField(max_length=100 ,choices=TYPE_URL_CHOICES, default="website")
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)

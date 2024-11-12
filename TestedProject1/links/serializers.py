@@ -6,15 +6,15 @@ class IdSerializer(serializers.Serializer):
 
 class LinkSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
-    link = serializers.URLField()
+    page_url = serializers.URLField()
     
     class Meta:
         model = Link
-        fields = ['link']
+        fields = ['page_url']
     
     # def create(self, validated_data):
     #     link: Link = Link(
-    #     heading = 
+    #     title = 
     #     short_description = 
     #     link = validated_data['link']
     #     image = 
