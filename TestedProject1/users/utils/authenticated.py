@@ -3,6 +3,7 @@ from rest_framework.permissions import BasePermission
 from rest_framework.exceptions import AuthenticationFailed
 from datetime import datetime, timedelta, timezone
 from .jwt_utils import create_token
+from users.models import User
 import jwt
 
 class IsAuthenticatedWithToken(BasePermission):
@@ -18,6 +19,7 @@ class IsAuthenticatedWithToken(BasePermission):
                     AuthenticationFailed('Access token has expired')
             except jwt.PyJWTError:
                 raise AuthenticationFailed('Invalid access token')
+            request.user = User.objects.get(email=payload.get('email'))
             return True
         raise AuthenticationFailed('Invalid tokens')
         

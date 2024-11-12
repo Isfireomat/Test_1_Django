@@ -17,8 +17,8 @@ from django.contrib.auth.hashers import check_password
 @api_view(['POST'])
 def registration(request):
     serializer = UserSerializer(data=request.data)
-    if not serializer.is_valid(): return Response(serializer.errors, 
-                                                  status=status.HTTP_400_BAD_REQUEST)
+    if not serializer.is_valid(): 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     user: User = serializer.create(serializer.validated_data)
     if User.objects.filter(email=user.email).exists(): return Response({'Error':'This user is excists'}, 
                                                            status=status.HTTP_400_BAD_REQUEST)
@@ -29,8 +29,8 @@ def registration(request):
 @api_view(['POST'])
 def authenticate(request):
     serializer = UserSerializer(data=request.data)
-    if not serializer.is_valid(): return Response(serializer.errors, 
-                                                  status=status.HTTP_401_UNAUTHORIZED)
+    if not serializer.is_valid(): 
+        return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
     user: User = serializer.create(serializer.validated_data)
     if not User.objects.filter(email=user.email).exists(): 
         return Response({'Error':'This user is not excists'}, 
@@ -46,8 +46,8 @@ def authenticate(request):
 @api_view(['POST'])
 def get_tokens(request):
     serializer = EmailSerializer(data=request.data)
-    if not serializer.is_valid(): return Response(serializer.errors, 
-                                                  status=status.HTTP_400_BAD_REQUEST)
+    if not serializer.is_valid(): 
+         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     access_token = create_token({'email':request.data['email']}, 
                                 settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token = create_token({'email':request.data['email']}, 
@@ -128,8 +128,7 @@ def password_reset_request(request):
     serializer: EmailSerializer = \
         EmailSerializer(data=request.data)
     if not serializer.is_valid(): 
-        return Response({"message":"Invalid email"},
-                        status=status.HTTP_400_BAD_REQUEST)
+         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     try:
         user: User = User.objects.get(email=serializer.validated_data['email'])    
         send_mail("Password Reset Request",
