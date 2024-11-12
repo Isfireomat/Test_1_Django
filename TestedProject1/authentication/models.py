@@ -15,6 +15,9 @@ class User(models.Model):
     def set_password(self, new_password: str):
         self.password = make_password(new_password)
         self.save()
+    
+    def __str__(self):
+        return self.email
         
 class Link(models.Model):
     TYPE_URL_CHOICES = [

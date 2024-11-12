@@ -10,5 +10,5 @@ urlpatterns = [
     path('change_password/', change_password, name='change_password'),
     path('password_reset_request/', password_reset_request, 
          name='password_reset_request'),
-    path('password_reset/', password_reset, name='password_reset'),
+    path('password_reset/<str:uid>/<str:token>/', password_reset, name='password_reset'),
 ]

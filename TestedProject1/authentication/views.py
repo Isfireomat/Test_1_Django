@@ -54,7 +54,7 @@ def get_tokens(request):
                                  settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     response: Response = Response({
         'access_token': access_token,
-        'resfresh_token': refresh_token
+        'refresh_token': refresh_token
     }, status=status.HTTP_200_OK)
     response.set_cookie(
             key='access_token',
@@ -75,36 +75,45 @@ def get_tokens(request):
 @api_view(['POST'])
 def refresh_token(request):
     refresh_token = request.COOKIES.get('refresh_token')
-    if refresh_token:
-        if not ('Bearer' in refresh_token): 
-            return Response({'message':'Invalid refresh token type'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        token = refresh_token.split(' ')[1]    
-        try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            if not (payload.get('exp') < datetime.now(timezone.utc).timestamp()): 
-                Response({'message':'Refresh token has expired'},
-                         status=status.HTTP_400_BAD_REQUEST)
-            new_access_token = create_token([payload.get('email')], expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-            response = Response({'new_access_token': new_access_token,
-                                 'resfresh_toke': refresh_token
-                                }, status=status.HTTP_200_OK)
-            response.set_cookie(
-                key='access_token',
-                value=f'Bearer {new_access_token}',
-                httponly=True,
-                secure=True,
-                samesite='lax',
-                max_age=int(settings.ACCESS_TOKEN_EXPIRE_MINUTES.total_seconds()))
-            return response
-        except jwt.PyJWTError:
-            raise Response({'message':'Invalid refresh token'},
+    if not refresh_token:
+        return Response({'message':'Invalid refresh token'},
                            status=status.HTTP_400_BAD_REQUEST)
-            
+    if not ('Bearer' in refresh_token): 
+        return Response({'message':'Invalid refresh token type'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    token = refresh_token.split(' ')[1]    
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if not (payload.get('exp') < datetime.now(timezone.utc).timestamp()): 
+            Response({'message':'Refresh token has expired'},
+                        status=status.HTTP_400_BAD_REQUEST)
+        new_access_token = create_token({'email':payload.get('email')}, expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        response = Response({'new_access_token': new_access_token,
+                                'resfresh_toke': refresh_token
+                            }, status=status.HTTP_200_OK)
+        response.set_cookie(
+            key='access_token',
+            value=f'Bearer {new_access_token}',
+            httponly=True,
+            secure=True,
+            samesite='lax',
+            max_age=int(settings.ACCESS_TOKEN_EXPIRE_MINUTES.total_seconds()))
+        return response
+    except jwt.PyJWTError:
+        return Response({'message':'Invalid refresh token'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def change_password(request):
     token = request.COOKIES.get("access_token")
+    if not token: 
+        return Response({'message':'Invalid access token'},
+                           status=status.HTTP_400_BAD_REQUEST)
+    if not ('Bearer' in token): 
+        raise Response({'message':'Invalid access token'},
+                           status=status.HTTP_400_BAD_REQUEST)
+    token = token.split(" ")[1] 
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     user = User.objects.get(email=payload.get('email'))
     if 'password' not in request.data or not request.data['password']: 
@@ -122,16 +131,15 @@ def password_reset_request(request):
         return Response({"message":"Invalid email"},
                         status=status.HTTP_400_BAD_REQUEST)
     try:
-        user: User = User.objects.get(email=serializer.email)    
+        user: User = User.objects.get(email=serializer.validated_data['email'])    
         send_mail("Password Reset Request",
-                f"""Click the link to reset your password: \n
-                  {generate_password_reset_link(request, user)}""",
-                settings.DEFAULT_FROM_EMAIL,
+                f"Click the link to reset your password: {generate_password_reset_link(request, user)}",
+                settings.EMAIL_HOST_USER,
                 [user.email],)
     except User.DoesNotExist:
         return Response({"message":"User does not exist"}, 
                         status=status.HTTP_400_BAD_REQUEST)
-    return Response({"message":"Email sended"}, 
+    return Response({"message":"Email sent"}, 
                     status=status.HTTP_200_OK)
 
 @api_view(['POST'])
