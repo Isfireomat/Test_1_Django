@@ -37,6 +37,11 @@ def standart_link_page_url():
 
 @pytest.fixture
 def standart_collection():
+    return {'title':'test',
+            'description':"tested"}
+
+@pytest.fixture
+def standart_collection():
     return {
         'title':'test',
         'description':'test'}
@@ -62,3 +67,9 @@ def create_link(client_with_token, standart_link_page_url):
     client_with_token.post(reverse('create_link'), 
                            standart_link_page_url, 
                            format='json')
+
+@pytest.fixture
+def create_collection(client_with_token, standart_collection):
+    response = client_with_token.post(reverse('create_collection'), 
+                                      standart_collection, 
+                                      format='json')

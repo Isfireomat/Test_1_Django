@@ -99,11 +99,11 @@ def read_collection(request):
     serializer = CollectionIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    if not Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+    if not Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
                                user=request.user).exists():
         return Response({'Error':'This collection is not exists'}, 
                         status=status.HTTP_400_BAD_REQUEST)
-    collection: Collection = Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+    collection: Collection = Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
                                               user=request.user)
     return Response({'collection': collection.values().first()}, status=status.HTTP_200_OK)    
 
@@ -116,7 +116,7 @@ def update_collection(request):
     if not serializer.validated_data.get('user_collection_id'):
         return Response({'message': 'user_collection_id is not exists'}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+        Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
                                   user=request.user).update(**serializer.validated_data)
     except Exception as e:
         return Response({'message':'collection dont update', 'Error': e}, 
@@ -129,10 +129,10 @@ def delete_collection(request):
     serializer = CollectionIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    if not Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+    if not Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
                                      user=request.user).exists():
         return Response({'Error':'This collection is not exists'}, 
                         status=status.HTTP_400_BAD_REQUEST)
-    Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+    Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
                               user= request.user).delete() 
     return Response({'message': 'collection deleted'}, status=status.HTTP_200_OK) 
