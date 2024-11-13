@@ -20,8 +20,8 @@ def registration(request):
     if not serializer.is_valid(): 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     user: User = serializer.create(serializer.validated_data)
-    if User.objects.filter(email=user.email).exists(): return Response({'Error':'This user is excists'}, 
-                                                           status=status.HTTP_400_BAD_REQUEST)
+    if User.objects.filter(email=user.email).exists(): 
+        return Response({'Error':'This user is not exists'}, status=status.HTTP_400_BAD_REQUEST)
     user.save()
     return Response({'message':'User created'}, status=status.HTTP_201_CREATED)
 
