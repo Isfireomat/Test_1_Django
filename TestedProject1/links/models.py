@@ -17,7 +17,9 @@ class Link(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='links')
+        related_name='links',
+        blank=False
+        )
     user_link_id = models.PositiveIntegerField()
     def save(self, *args, **kwargs):
         if not self.user_link_id:
@@ -28,21 +30,25 @@ class Link(models.Model):
 
 class Collection(models.Model):
     title = models.CharField(max_length=100, blank=False, null=False)
-    short_description = models.CharField(max_length=500, blank=True)
+    description = models.CharField(max_length=500, blank=True)
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     change_date_time = models.DateTimeField(auto_now=True, null=False)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='collections')
+        related_name='collections',
+        blank=False
+        )
     links = models.ManyToManyField(
         Link,
-        related_name='links')
+        related_name='links',
+        blank=True
+        )
     user_collection_id = models.PositiveIntegerField()
     
     def save(self, *args, **kwargs):
-        if not self.user_link_id:
+        if not self.user_collection_id:
             last_collection= Collection.objects.filter(user=self.user).order_by('user_collection_id').last()
-            self.user_collection_id = last_collection.user_link_id + 1 if last_collection else 1
+            self.user_collection_id = last_collection.user_collection_id + 1 if last_collection else 1
         self.full_clean()
         super().save(*args, **kwargs)

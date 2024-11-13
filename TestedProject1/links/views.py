@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Link, Collection
-from .serializers import IdSerializer, \
+from .serializers import LinkIdSerializer, CollectionIdSerializer,\
                          LinkSerializer, CollectionSerializer
 from users.utils import IsAuthenticatedWithToken
 import jwt
@@ -27,18 +27,22 @@ def create_link(request):
         url_information.update({'user': request.user})
         Link.objects.create(**url_information)
     except Exception as e:
-        return Response({'message':'link dont created', 'Error': e}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message':'link dont created', 'Error': e}, 
+                        status=status.HTTP_400_BAD_REQUEST)
     return Response({'message':'link created'}, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def read_link(request):
-    serializer = IdSerializer(data=request.data)
+    serializer = LinkIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    if not Link.objects.filter(user_link_id=serializer.validated_data['id'], user= request.user).exists():
-        return Response({'Error':'This lincs is not exists'}, status=status.HTTP_400_BAD_REQUEST)
-    link: Link = Link.objects.get(user_link_id=serializer.validated_data['id'], user= request.user)
+    if not Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
+                               user=request.user).exists():
+        return Response({'Error':'This linc is not exists'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    link: Link = Link.objects.get(user_link_id=serializer.validated_data['user_link_id'], 
+                                  user=request.user)
     return Response({'link': link.values()}, status=status.HTTP_200_OK)    
 
 @api_view(['POST'])
@@ -47,24 +51,29 @@ def update_link(request):
     serializer = LinkSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    if not serializer.validated_data.get('id'):
-        return Response({'message': 'id is not exists'}, status=status.HTTP_400_BAD_REQUEST)
+    if not serializer.validated_data.get('user_link_id'):
+        return Response({'message': 'user_link_id is not exists'}, status=status.HTTP_400_BAD_REQUEST)
     try:
         url_information: dict = get_url_information(serializer.validated_data['url'])
-        Link.objects.filter(user_link_id=serializer.validated_data['id'], user= request.user).update(**url_information)
+        Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
+                            user=request.user).update(**url_information)
     except Exception as e:
-        return Response({'message':'link dont update', 'Error': e}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message':'link dont update', 'Error': e}, 
+                        status=status.HTTP_400_BAD_REQUEST)
     return Response({'message':'link updated'}, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def delete_link(request):
-    serializer = IdSerializer(data=request.data)
+    serializer = LinkIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    if not Link.objects.filter(user_link_id=serializer.validated_data['id'], user= request.user).exists():
-        return Response({'Error':'This lincs is not exists'}, status=status.HTTP_400_BAD_REQUEST)
-    Link.objects.filter(user_link_id=serializer.validated_data['id'], user= request.user).delete() 
+    if not Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
+                               user=request.user).exists():
+        return Response({'Error':'This lincs is not exists'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
+                        user= request.user).delete() 
     return Response({'message': 'link deleted'}, status=status.HTTP_200_OK)  
 
 @api_view(['POST'])
@@ -73,13 +82,25 @@ def create_collection(request):
     serializer = CollectionSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+    Collection.objects.create(title=serializer.validated_data['title'],
+                              description=serializer.validated_data['description'],
+                              user=request.user)
+    return Response({'message':'collection created'},
+                    status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def read_collection(request):
-    serializer = IdSerializer(data=request.data)
+    serializer = CollectionIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if not Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+                               user=request.user).exists():
+        return Response({'Error':'This collection is not exists'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    collection: Link = Collection.objects.get(user_link_id=serializer.validated_data['user_collection_id'], 
+                                              user=request.user)
+    return Response({'link': collection.values()}, status=status.HTTP_200_OK)    
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
@@ -87,10 +108,26 @@ def update_collection(request):
     serializer = CollectionSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if not serializer.validated_data.get('user_collection_id'):
+        return Response({'message': 'user_collection_id is not exists'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+                                  user=request.user).update(**serializer.validated_data)
+    except Exception as e:
+        return Response({'message':'collection dont update', 'Error': e}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message':'collection updated'}, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def delete_collection(request):
-    serializer = IdSerializer(data=request.data)
+    serializer = CollectionIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if not Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+                                     user=request.user).exists():
+        return Response({'Error':'This collection is not exists'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
+                              user= request.user).delete() 
+    return Response({'message': 'collection deleted'}, status=status.HTTP_200_OK) 
