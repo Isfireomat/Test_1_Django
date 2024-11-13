@@ -11,9 +11,9 @@ def get_url_information(url: str):
     information = {
         'title': None,
         'description': None,
-        'url': url,
+        'page_url': url,
         'image': None,
-        'type': 'website'
+        'type_url': 'website'
     }
     soup = BeautifulSoup(response.text, 'html.parser')
     no_og_meta_tags = soup.find_all('meta',  attrs={'name': True})
@@ -23,5 +23,5 @@ def get_url_information(url: str):
     og_data = {tag["property"].replace('og:',''): tag["content"] for tag in og_meta_tags if tag.get("content")}
     for key in information.keys():
         information[key] = og_data.get(key, no_og_data.get(key, information[key]))
-    information['type'] = information['type'] if information['type'] in TYPE_URL_CHOICES else 'website'
+    information['type_url'] = information['type_url'] if information['type_url'] in TYPE_URL_CHOICES else 'website'
     return information

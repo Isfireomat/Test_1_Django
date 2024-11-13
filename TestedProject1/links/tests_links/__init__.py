@@ -27,9 +27,13 @@ def standart_user():
 def standart_link():
     return {'title':"tested",
             'description':"tested",
-            'page_url':"https://rabota.by",
-            'image':b'picture=',
+            'page_url':"https://thelastgame.ru/dwarf-fortress/",
+            'image':'picture=',
             'type_url':'website'}
+
+@pytest.fixture
+def standart_link_page_url():
+    return {'page_url':"https://thelastgame.ru/dwarf-fortress/"}
 
 @pytest.fixture
 def standart_collection():
@@ -45,3 +49,16 @@ def registration(client, standart_user):
 def user(standart_user, registration):
     user: User = User.objects.get(email=standart_user['email'])
     return user
+
+@pytest.fixture
+def client_with_token(client, registration, standart_user):
+    response = client.post(reverse('get_tokens'), 
+                           {'email':standart_user['email']}, format='json')
+    client.cookies['access_token'] = response.cookies['access_token']
+    return client
+
+@pytest.fixture
+def create_link(client_with_token, standart_link_page_url):
+    client_with_token.post(reverse('create_link'), 
+                           standart_link_page_url, 
+                           format='json')

@@ -8,9 +8,9 @@ class Link(models.Model):
     ("music", "Music"),
     ("video", "Video"),]
     title = models.CharField(max_length=100, blank=False, null=False)
-    description = models.CharField(max_length=500, blank=True)
+    description = models.CharField(max_length=2000, blank=True)
     page_url = models.URLField(blank=False, null=False)
-    image = models.BinaryField(blank=True,  null=True)
+    image = models.CharField(max_length=500, blank=True,  null=True)
     type_url = models.CharField(max_length=100 ,choices=TYPE_URL_CHOICES, default="website")
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     change_date_time = models.DateTimeField(auto_now=True, null=False)
@@ -30,7 +30,7 @@ class Link(models.Model):
 
 class Collection(models.Model):
     title = models.CharField(max_length=100, blank=False, null=False)
-    description = models.CharField(max_length=500, blank=True)
+    description = models.CharField(max_length=2000, blank=True)
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     change_date_time = models.DateTimeField(auto_now=True, null=False)
     user = models.ForeignKey(

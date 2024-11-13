@@ -15,6 +15,8 @@ import jwt
 from django.contrib.auth.hashers import check_password   
 from links.utils import get_url_information
 from django.db import IntegrityError
+from requests.exceptions import HTTPError
+from django.core.exceptions import ValidationError
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
@@ -23,11 +25,12 @@ def create_link(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
     try:
-        url_information: dict = get_url_information(serializer.validated_data['url'])
+        url_information: dict = get_url_information(serializer.validated_data['page_url'])
         url_information.update({'user': request.user})
         Link.objects.create(**url_information)
     except Exception as e:
-        return Response({'message':'link dont created', 'Error': e}, 
+        return Response({'message':'link dont created', 
+                         'Error': e}, 
                         status=status.HTTP_400_BAD_REQUEST)
     return Response({'message':'link created'}, status=status.HTTP_201_CREATED)
 
@@ -41,9 +44,9 @@ def read_link(request):
                                user=request.user).exists():
         return Response({'Error':'This linc is not exists'}, 
                         status=status.HTTP_400_BAD_REQUEST)
-    link: Link = Link.objects.get(user_link_id=serializer.validated_data['user_link_id'], 
+    link: Link = Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
                                   user=request.user)
-    return Response({'link': link.values()}, status=status.HTTP_200_OK)    
+    return Response({'link': link.values().first()}, status=status.HTTP_200_OK)    
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
@@ -54,13 +57,15 @@ def update_link(request):
     if not serializer.validated_data.get('user_link_id'):
         return Response({'message': 'user_link_id is not exists'}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        url_information: dict = get_url_information(serializer.validated_data['url'])
+        url_information: dict = get_url_information(serializer.validated_data['page_url'])
         Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
                             user=request.user).update(**url_information)
     except Exception as e:
         return Response({'message':'link dont update', 'Error': e}, 
                         status=status.HTTP_400_BAD_REQUEST)
-    return Response({'message':'link updated'}, status=status.HTTP_201_CREATED)
+    link: Link = Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
+                                  user=request.user)
+    return Response({'message':'link updated', 'link': link.values().first()}, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
@@ -98,9 +103,9 @@ def read_collection(request):
                                user=request.user).exists():
         return Response({'Error':'This collection is not exists'}, 
                         status=status.HTTP_400_BAD_REQUEST)
-    collection: Link = Collection.objects.get(user_link_id=serializer.validated_data['user_collection_id'], 
+    collection: Collection = Collection.objects.filter(user_link_id=serializer.validated_data['user_collection_id'], 
                                               user=request.user)
-    return Response({'link': collection.values()}, status=status.HTTP_200_OK)    
+    return Response({'collection': collection.values().first()}, status=status.HTTP_200_OK)    
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])

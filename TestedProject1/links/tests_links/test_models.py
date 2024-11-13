@@ -48,15 +48,6 @@ def test_link_with_errors(standart_link, user):
         type_url=standart_link['type_url'],
         user=user 
     )
-    with pytest.raises(binascii.Error):
-        link: Link = Link.objects.create(
-        title=standart_link['title'],
-        description=standart_link['description'],
-        page_url=standart_link['page_url'],
-        image='tested=',
-        type_url=standart_link['type_url'],
-        user=user 
-    )
     with pytest.raises(ValidationError):
         link: Link = Link.objects.create(
         title=standart_link['title'],
