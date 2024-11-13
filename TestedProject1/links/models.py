@@ -18,8 +18,11 @@ class Link(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='links')
-    
+    user_link_id = models.PositiveIntegerField()
     def save(self, *args, **kwargs):
+        if not self.user_link_id:
+            last_link = Link.objects.filter(user=self.user).order_by('user_link_id').last()
+            self.user_link_id = last_link.user_link_id + 1 if last_link else 1
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -35,7 +38,11 @@ class Collection(models.Model):
     links = models.ManyToManyField(
         Link,
         related_name='links')
+    user_collection_id = models.PositiveIntegerField()
     
     def save(self, *args, **kwargs):
+        if not self.user_link_id:
+            last_collection= Collection.objects.filter(user=self.user).order_by('user_collection_id').last()
+            self.user_collection_id = last_collection.user_link_id + 1 if last_collection else 1
         self.full_clean()
         super().save(*args, **kwargs)
