@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from .models import Link, Collection
 
+class LinkCollectionIdSerializer(serializers.Serializer):
+    user_link_id = serializers.IntegerField()
+    user_collection_id = serializers.IntegerField()
+
 class LinkIdSerializer(serializers.Serializer):
     user_link_id = serializers.IntegerField()
 

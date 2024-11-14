@@ -7,7 +7,8 @@ from users.utils import IsAuthenticatedWithToken
 from links.utils import get_url_information
 from links.models import Link, Collection
 from links.serializers import LinkIdSerializer, CollectionIdSerializer,\
-                         LinkSerializer, CollectionSerializer
+                         LinkSerializer, CollectionSerializer, \
+                         LinkCollectionIdSerializer
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
@@ -34,12 +35,11 @@ def read_link(request: Request) -> Response:
     if not serializer.is_valid():
         return Response(serializer.errors, 
                         status=status.HTTP_400_BAD_REQUEST)
-    if not Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
-                               user=request.user).exists():
-        return Response({'Error':'This linc is not exists'}, 
-                        status=status.HTTP_400_BAD_REQUEST)
     link: Link = Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
                                      user=request.user)
+    if not link: 
+        return Response({'Error':'This linc is not exists'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
     return Response({'link': link.values().first()}, status=status.HTTP_200_OK)    
 
 @api_view(['POST'])
@@ -65,6 +65,9 @@ def update_link(request: Request) -> Response:
                         status=status.HTTP_400_BAD_REQUEST)
     link: Link = Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
                                      user=request.user)
+    if not link:
+        return Response({'Error':'This linc is not exists'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
     return Response({'message':'link updated', 'link': link.values().first()}, 
                     status=status.HTTP_201_CREATED)
 
@@ -150,6 +153,49 @@ def delete_collection(request: Request) -> Response:
         return Response({'Error':'This collection is not exists'}, 
                         status=status.HTTP_400_BAD_REQUEST)
     Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
-                              user= request.user).delete() 
+                              user=request.user).delete() 
     return Response({'message': 'collection deleted'}, 
                     status=status.HTTP_200_OK) 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticatedWithToken])
+def add_link_to_collection(request: Request) -> Response:
+    serializer: LinkCollectionIdSerializer = LinkCollectionIdSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    try:
+        link: Link = Link.objects.get(user_link_id=serializer.validated_data['user_link_id'],
+                                    user=request.user)
+    except Link.DoesNotExist:
+        return Response({'message':'Incorect link'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    if not Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
+                                     user=request.user).exists():
+        return Response({'Error':'This collection is not exists'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    try:
+        Collection.objects.get(user_collection_id=serializer.validated_data['user_collection_id'], 
+                                user=request.user).links.add(link)
+    except Exception as e:
+        return Response({'message':'collection dont update', 'Error': e}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message':'link add to collection'}, 
+                    status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticatedWithToken])
+def read_links_from_collection(request: Request) -> Response:
+    serializer: CollectionIdSerializer = CollectionIdSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    try:
+        collection: Collection = Collection.objects.get(
+            user_collection_id=serializer.validated_data['user_collection_id'],
+            user=request.user)
+    except Collection.DoesNotExist:
+        return Response({'Error':'Incorect collection'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    return Response({'links':list(collection.links.all().values())},
+                    status=status.HTTP_200_OK)
