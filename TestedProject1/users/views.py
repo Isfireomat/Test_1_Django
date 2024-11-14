@@ -38,17 +38,38 @@ def authenticate(request: Request) -> Response:
                           User.objects.get(email=user.email).password): 
         return Response({'Error':'Password incorrect'}, 
                         status=status.HTTP_401_UNAUTHORIZED)
-    return Response({'message': 'Authentication successful'}, 
-                    status=status.HTTP_200_OK)
+    authenticate_token: str = create_token({'email': user.email}, 
+                                   settings.TEMP_TOKEN_EXPIRE_MINUTES)
+    response: Response = Response({'message': 'Authentication successful'}, 
+                                  status=status.HTTP_200_OK)
+    response.set_cookie(
+        key='authenticate_token',
+        value=f'Bearer {authenticate_token}',
+        httponly=True,
+        secure=True,
+        samesite='lax',
+        max_age=int(settings.TEMP_TOKEN_EXPIRE_MINUTES.total_seconds())
+    )
+    return response
         
 @api_view(['POST'])
 def get_tokens(request: Request) -> Response:
-    serializer: EmailSerializer = EmailSerializer(data=request.data)
-    if not serializer.is_valid(): 
-         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    access_token: str = create_token({'email':request.data['email']}, 
+    authenticate_token: Optional[str] = request.COOKIES.get('authenticate_token')
+    if not authenticate_token or 'Bearer' not in authenticate_token:
+        return Response({'message': 'Authentication required'}, 
+                        status=status.HTTP_401_UNAUTHORIZED)
+    authenticate_token: str = authenticate_token.split(' ')[1]
+    try:
+        payload: Dict[str, str] = jwt.decode(authenticate_token, 
+                                             settings.SECRET_KEY, 
+                                             algorithms=[settings.ALGORITHM])
+        email: str = payload.get('email')
+    except jwt.PyJWTError:
+        return Response({'message': 'Invalid or expired token'}, 
+                        status=status.HTTP_401_UNAUTHORIZED)
+    access_token: str = create_token({'email':email}, 
                                 settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_token: str = create_token({'email':request.data['email']}, 
+    refresh_token: str = create_token({'email':email}, 
                                  settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     response: Response = Response({'access_token': access_token,
                                    'refresh_token': refresh_token}, 

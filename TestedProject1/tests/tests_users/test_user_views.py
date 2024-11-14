@@ -41,6 +41,7 @@ def test_user_authenticate(client: APIClient,
     response: Response = client.post(reverse('authenticate'), 
                                      standart_user, format='json')
     assert response.status_code == 200
+    assert response.cookies.get('authenticate_token') 
 
 @pytest.mark.django_db
 def test_user_authenticate_without_email(client: APIClient, 
@@ -82,10 +83,12 @@ def test_user_authenticate_without_email(client: APIClient,
 
 @pytest.mark.django_db
 def test_get_tokens(client: APIClient, 
-                    registration: None) -> None:
-    response: Response = client.post(reverse('get_tokens'), 
-                                     {'email':'test@gmail.com'}, 
-                                     format='json')
+                    registration: None,
+                    standart_user: Dict[str, str]) -> None:
+    response: Response = client.post(reverse('authenticate'), 
+                                     standart_user, format='json')
+    client.cookies['authenticate_token'] = response.cookies['authenticate_token']
+    response: Response = client.post(reverse('get_tokens'))
     assert response.status_code == 200
     assert 'access_token' in response.data.keys()
     assert 'refresh_token' in response.data.keys()
@@ -93,12 +96,10 @@ def test_get_tokens(client: APIClient,
     assert 'refresh_token' in response.cookies
 
 @pytest.mark.django_db
-def test_get_tokens_with_non_valid_email(client: APIClient,
+def test_get_tokens_without_authenticate_token(client: APIClient,
                                          registration: None) -> None:
-    response: Response = client.post(reverse('get_tokens'), 
-                                     {'email':'test'}, 
-                                     format='json')
-    assert response.status_code == 400
+    response: Response = client.post(reverse('get_tokens'))
+    assert response.status_code == 401
     
 @pytest.mark.django_db
 def test_refresh_client(client: APIClient, 
@@ -135,6 +136,9 @@ def test_change_password(client: APIClient,
                                      {'email':standart_user['email'], 'password':'1234567890'},
                                      format='json')
     assert response.status_code == 403
+    response: Response = client.post(reverse('authenticate'), 
+                                     standart_user, format='json')
+    client.cookies['authenticate_token'] = response.cookies['authenticate_token']
     response: Response = client.post(reverse('get_tokens'), 
                                      {'email':standart_user['email']}, 
                                      format='json')

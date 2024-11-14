@@ -5,6 +5,7 @@ from django.core.management import call_command
 from django.urls import reverse
 from django.db.backends.base.base import BaseDatabaseWrapper
 from rest_framework.test import APIClient
+from rest_framework.response import Response
 import pytest
 from users.models import User
 
@@ -56,9 +57,12 @@ def user(standart_user: Dict[str, str], registration: None) -> User:
     return user
 
 @pytest.fixture
-def client_with_token(client: APIClient, registration: None, standart_user: Dict[str, str]) -> APIClient:
-    response = client.post(reverse('get_tokens'), 
-                           {'email':standart_user['email']}, format='json')
+def client_with_token(client: APIClient, 
+                      registration: None, standart_user: Dict[str, str]) -> APIClient:
+    response: Response = client.post(reverse('authenticate'), 
+                                     standart_user, format='json')
+    client.cookies['authenticate_token'] = response.cookies['authenticate_token']
+    response: Response = client.post(reverse('get_tokens'))
     client.cookies['access_token'] = response.cookies['access_token']
     return client
 

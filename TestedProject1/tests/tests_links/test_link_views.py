@@ -5,10 +5,10 @@ from rest_framework.test import APIClient
 import pytest
 from links.models import Link, Collection
 from users.models import User
-from TestedProject1.tests.conftest import client_with_token, standart_user, \
-                              standart_link_page_url, standart_collection, \
-                              registration, user, create_link, standart_collection, \
-                              create_collection
+from conftest import client_with_token, standart_user, \
+                     standart_link_page_url, standart_collection, \
+                     registration, user, create_link, standart_collection, \
+                     create_collection
 
 @pytest.mark.django_db
 def test_create_link(client_with_token: APIClient, 

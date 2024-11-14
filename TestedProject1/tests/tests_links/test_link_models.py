@@ -3,8 +3,8 @@ from django.core.exceptions import ValidationError
 import pytest
 from users.models import User
 from links.models import Link, Collection
-from TestedProject1.tests.conftest import standart_user, standart_link, registration, \
-                              standart_collection, user
+from conftest import standart_user, standart_link, registration, \
+                     standart_collection, user
 
 @pytest.mark.django_db
 def test_link_model(standart_link: Dict[str, str], 
