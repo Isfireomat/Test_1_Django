@@ -56,6 +56,10 @@ def update_link(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not serializer.validated_data.get('user_link_id'):
         return Response({'message': 'user_link_id is not exists'}, status=status.HTTP_400_BAD_REQUEST)
+    if not Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
+                            user=request.user).exists():
+        return Response({'message': 'link is not exists'}, status=status.HTTP_400_BAD_REQUEST)
+    
     try:
         url_information: dict = get_url_information(serializer.validated_data['page_url'])
         Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
@@ -115,13 +119,18 @@ def update_collection(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not serializer.validated_data.get('user_collection_id'):
         return Response({'message': 'user_collection_id is not exists'}, status=status.HTTP_400_BAD_REQUEST)
+    if not  Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
+                                  user=request.user).exists():
+        return Response({'message': 'collection is not exists'}, status=status.HTTP_400_BAD_REQUEST)
     try:
         Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
                                   user=request.user).update(**serializer.validated_data)
     except Exception as e:
         return Response({'message':'collection dont update', 'Error': e}, 
                         status=status.HTTP_400_BAD_REQUEST)
-    return Response({'message':'collection updated'}, status=status.HTTP_201_CREATED)
+    collection: Collection = Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
+                                              user=request.user)
+    return Response({'message':'collection updated', 'collection': collection.values().first()}, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])

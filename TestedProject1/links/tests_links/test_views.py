@@ -66,6 +66,12 @@ def test_update_link(client_with_token, create_link, standart_link_page_url):
     assert new_page_url != standart_link_page_url['page_url']
     assert standart_link_page_url['page_url'] not in \
         response.data.get('link').get('page_url')
+    response: Response = client_with_token.post(reverse('update_link'),
+                                      {'user_link_id': '256',
+                                       'page_url': new_page_url},
+                                      format='json')
+    assert response.status_code == 400
+    
     
 @pytest.mark.django_db
 def test_delete_link(client_with_token, create_link, user):
@@ -74,6 +80,10 @@ def test_delete_link(client_with_token, create_link, user):
                                         format='json')
     assert response.status_code == 400
     assert Link.objects.filter(user_link_id=1, user=user).exists()
+    response: Response = client_with_token.post(reverse('delete_link'),
+                                        {'user_link_id': '256'},
+                                        format='json')
+    assert response.status_code == 400
     response: Response = client_with_token.post(reverse('delete_link'),
                                         {'user_link_id': '1'},
                                         format='json')
@@ -122,11 +132,52 @@ def test_read_collection(client_with_token, create_collection, standart_collecti
     assert response.status_code == 400
 
 
-# @pytest.mark.django_db
-# def test_update_collection(client_with_token, create_link, user):
-#     pass
-
-
-# @pytest.mark.django_db
-# def test_delete_collection(client_with_token, create_link, user):
-#     pass
+@pytest.mark.django_db
+def test_update_collection(client_with_token, create_collection, user):
+    new_collection_with_user_collection_id = {
+        'title': 'tested_2',
+        'description': 'test_description',
+        'user_collection_id': 1
+    }
+    collection: Collection = Collection.objects.get(user_collection_id=1)
+    assert collection.title !=new_collection_with_user_collection_id['title']
+    assert collection.description !=new_collection_with_user_collection_id['description']
+    response: Response = client_with_token.post(reverse('update_collection'),
+                                      new_collection_with_user_collection_id,
+                                      format='json')
+    assert response.status_code == 201
+    assert 'collection' in response.data
+    collection: Collection = Collection.objects.get(user_collection_id=1)
+    assert collection.title == new_collection_with_user_collection_id['title']
+    assert collection.description == new_collection_with_user_collection_id['description']
+    new_collection_with_user_collection_id = {
+        'title': 'tested_2',
+        'description': 'test_description',
+        'user_collection_id': 256
+    }
+    response: Response = client_with_token.post(reverse('update_collection'),
+                                      new_collection_with_user_collection_id,
+                                      format='json')
+    assert response.status_code == 400
+    
+    
+@pytest.mark.django_db
+def test_delete_collection(client_with_token, create_collection, user):
+    response: Response = client_with_token.post(reverse('delete_collection'),
+                                        {'id': '1'},
+                                        format='json')
+    assert response.status_code == 400
+    assert Collection.objects.filter(user_collection_id=1, user=user).exists()
+    response: Response = client_with_token.post(reverse('delete_collection'),
+                                        {'user_collection_id': '256'},
+                                        format='json')
+    assert response.status_code == 400
+    response: Response = client_with_token.post(reverse('delete_collection'),
+                                        {'user_collection_id': '1'},
+                                        format='json')
+    assert response.status_code == 200
+    assert not Collection.objects.filter(user_collection_id=1, user=user).exists()
+    response: Response = client_with_token.post(reverse('delete_collection'),
+                                        {'user_collection_id': '1'},
+                                        format='json')
+    assert response.status_code == 400
