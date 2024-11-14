@@ -1,31 +1,22 @@
-from datetime import datetime, timedelta, timezone
-from django.utils.http import urlsafe_base64_decode
-from django.conf import settings
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-from django.contrib.auth.hashers import make_password
+from typing import Optional, Union, Dict
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Link, Collection
-from .serializers import LinkIdSerializer, CollectionIdSerializer,\
-                         LinkSerializer, CollectionSerializer
 from users.utils import IsAuthenticatedWithToken
-import jwt
-from django.contrib.auth.hashers import check_password   
 from links.utils import get_url_information
-from django.db import IntegrityError
-from requests.exceptions import HTTPError
-from django.core.exceptions import ValidationError
+from links.models import Link, Collection
+from links.serializers import LinkIdSerializer, CollectionIdSerializer,\
+                         LinkSerializer, CollectionSerializer
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def create_link(request):
-    serializer = LinkSerializer(data=request.data)
+def create_link(request: Request) -> Response:
+    serializer: LinkSerializer = LinkSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
     try:
-        url_information: dict = get_url_information(serializer.validated_data['page_url'])
+        url_information: Dict[str, Optional[str]] = get_url_information(serializer.validated_data['page_url'])
         url_information.update({'user': request.user})
         Link.objects.create(**url_information)
     except Exception as e:
@@ -36,8 +27,8 @@ def create_link(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def read_link(request):
-    serializer = LinkIdSerializer(data=request.data)
+def read_link(request: Request) -> Response:
+    serializer: LinkIdSerializer = LinkIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
@@ -50,8 +41,8 @@ def read_link(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def update_link(request):
-    serializer = LinkSerializer(data=request.data)
+def update_link(request: Request) -> Response:
+    serializer: LinkSerializer = LinkSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not serializer.validated_data.get('user_link_id'):
@@ -61,7 +52,7 @@ def update_link(request):
         return Response({'message': 'link is not exists'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        url_information: dict = get_url_information(serializer.validated_data['page_url'])
+        url_information: Dict[str, Optional[str]] = get_url_information(serializer.validated_data['page_url'])
         Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
                             user=request.user).update(**url_information)
     except Exception as e:
@@ -73,8 +64,8 @@ def update_link(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def delete_link(request):
-    serializer = LinkIdSerializer(data=request.data)
+def delete_link(request: Request) -> Response:
+    serializer: LinkIdSerializer = LinkIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not Link.objects.filter(user_link_id=serializer.validated_data['user_link_id'], 
@@ -87,8 +78,8 @@ def delete_link(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def create_collection(request):
-    serializer = CollectionSerializer(data=request.data)
+def create_collection(request: Request) -> Response:
+    serializer: CollectionSerializer = CollectionSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
     Collection.objects.create(title=serializer.validated_data['title'],
@@ -99,8 +90,8 @@ def create_collection(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def read_collection(request):
-    serializer = CollectionIdSerializer(data=request.data)
+def read_collection(request: Request) -> Response:
+    serializer: CollectionSerializer = CollectionIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
@@ -108,13 +99,13 @@ def read_collection(request):
         return Response({'Error':'This collection is not exists'}, 
                         status=status.HTTP_400_BAD_REQUEST)
     collection: Collection = Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 
-                                              user=request.user)
+                                                       user=request.user)
     return Response({'collection': collection.values().first()}, status=status.HTTP_200_OK)    
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def update_collection(request):
-    serializer = CollectionSerializer(data=request.data)
+def update_collection(request: Request) -> Response:
+    serializer: CollectionSerializer = CollectionSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not serializer.validated_data.get('user_collection_id'):
@@ -134,8 +125,8 @@ def update_collection(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def delete_collection(request):
-    serializer = CollectionIdSerializer(data=request.data)
+def delete_collection(request: Request) -> Response:
+    serializer: CollectionIdSerializer = CollectionIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if not Collection.objects.filter(user_collection_id=serializer.validated_data['user_collection_id'], 

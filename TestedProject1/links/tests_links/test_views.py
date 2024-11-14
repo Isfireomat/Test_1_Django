@@ -1,43 +1,39 @@
-import pytest
-import binascii
-from users.serializers import UserSerializer
-from users.models import User
-from django.core.exceptions import ValidationError
+from typing import Dict, Union
 from django.urls import reverse
-from users.utils import create_token
-from django.conf import settings
-from rest_framework.exceptions import AuthenticationFailed
-from django.core import mail
-import re
-from . import client_with_token, standart_user, \
-              standart_link_page_url, standart_collection, \
-              registration, user, create_link, standart_collection, \
-              create_collection
-import json
 from rest_framework.response import Response
+from rest_framework.test import APIClient
+import pytest
 from links.models import Link, Collection
+from users.models import User
+from links.tests_links import client_with_token, standart_user, \
+                              standart_link_page_url, standart_collection, \
+                              registration, user, create_link, standart_collection, \
+                              create_collection
 
 @pytest.mark.django_db
-def test_create_link(client_with_token, standart_link_page_url):
-    response = client_with_token.post(reverse('create_link'), 
+def test_create_link(client_with_token: APIClient, 
+                     standart_link_page_url: Dict[str, str]) -> None:
+    response: Response = client_with_token.post(reverse('create_link'), 
                                       standart_link_page_url, 
                                       format='json')
     assert response.status_code == 201
-    response = client_with_token.post(reverse('create_link'), 
+    response: Response = client_with_token.post(reverse('create_link'), 
                                       {'url':standart_link_page_url['page_url']}, 
                                       format='json')
     assert response.status_code == 400
-    response = client_with_token.post(reverse('create_link'), 
+    response: Response = client_with_token.post(reverse('create_link'), 
                                       {'page_url':'thelastgame.ru/dwarf-fortress/'}, 
                                       format='json')
     assert response.status_code == 400
-    response = client_with_token.post(reverse('create_link'), 
+    response: Response = client_with_token.post(reverse('create_link'), 
                                       {'page_url':'https://ghgugyigoihgupohpgpui'}, 
                                       format='json')
     assert response.status_code == 400
 
 @pytest.mark.django_db
-def test_read_link(client_with_token, create_link, standart_link_page_url):
+def test_read_link(client_with_token: APIClient, 
+                   create_link: None, 
+                   standart_link_page_url: Dict[str, str]) -> None:
     response: Response = client_with_token.post(reverse('read_link'),
                                       {'user_link_id':'1'},
                                       format='json')
@@ -54,8 +50,10 @@ def test_read_link(client_with_token, create_link, standart_link_page_url):
     assert response.status_code == 400
 
 @pytest.mark.django_db
-def test_update_link(client_with_token, create_link, standart_link_page_url):
-    new_page_url = 'https://thelastgame.ru/factorio/'
+def test_update_link(client_with_token: APIClient, 
+                     create_link: None, 
+                     standart_link_page_url: Dict[str, str]) -> None:
+    new_page_url: str = 'https://thelastgame.ru/factorio/'
     response: Response = client_with_token.post(reverse('update_link'),
                                       {'user_link_id': '1',
                                        'page_url': new_page_url},
@@ -70,11 +68,12 @@ def test_update_link(client_with_token, create_link, standart_link_page_url):
                                       {'user_link_id': '256',
                                        'page_url': new_page_url},
                                       format='json')
-    assert response.status_code == 400
-    
+    assert response.status_code == 400   
     
 @pytest.mark.django_db
-def test_delete_link(client_with_token, create_link, user):
+def test_delete_link(client_with_token: APIClient,
+                     create_link: None, 
+                     user: User) -> None:
     response: Response = client_with_token.post(reverse('delete_link'),
                                         {'id': '1'},
                                         format='json')
@@ -95,27 +94,31 @@ def test_delete_link(client_with_token, create_link, user):
     assert response.status_code == 400
 
 @pytest.mark.django_db
-def test_create_collection(client_with_token, standart_collection, user):
-    response = client_with_token.post(reverse('create_collection'), 
+def test_create_collection(client_with_token: APIClient, 
+                           standart_collection: Dict[str, str], 
+                           user: User) -> None:
+    response: Response = client_with_token.post(reverse('create_collection'), 
                                       standart_collection, 
                                       format='json')
     assert response.status_code == 201
-    response = client_with_token.post(reverse('create_collection'), 
+    response: Response = client_with_token.post(reverse('create_collection'), 
                                       {}, 
                                       format='json')
     assert response.status_code == 400
-    response = client_with_token.post(reverse('create_collection'), 
+    response: Response = client_with_token.post(reverse('create_collection'), 
                                       {'description':standart_collection['description']}, 
                                       format='json')
     assert response.status_code == 400
-    response = client_with_token.post(reverse('create_collection'), 
+    response: Response = client_with_token.post(reverse('create_collection'), 
                                       {'page_url':'https://ghgugyigoihgupohpgpui'}, 
                                       format='json')
     assert response.status_code == 400
 
-
 @pytest.mark.django_db
-def test_read_collection(client_with_token, create_collection, standart_collection, user):
+def test_read_collection(client_with_token: APIClient, 
+                         create_collection: None, 
+                         standart_collection: Dict[str, str], 
+                         user: User) -> None:
     response: Response = client_with_token.post(reverse('read_collection'),
                                       {'user_collection_id':'1'},
                                       format='json')
@@ -131,10 +134,11 @@ def test_read_collection(client_with_token, create_collection, standart_collecti
                                       format='json')
     assert response.status_code == 400
 
-
 @pytest.mark.django_db
-def test_update_collection(client_with_token, create_collection, user):
-    new_collection_with_user_collection_id = {
+def test_update_collection(client_with_token: APIClient,
+                           create_collection: None,
+                           user: User) -> None:
+    new_collection_with_user_collection_id: Dict[str, Union[str, int]] = {
         'title': 'tested_2',
         'description': 'test_description',
         'user_collection_id': 1
@@ -150,7 +154,7 @@ def test_update_collection(client_with_token, create_collection, user):
     collection: Collection = Collection.objects.get(user_collection_id=1)
     assert collection.title == new_collection_with_user_collection_id['title']
     assert collection.description == new_collection_with_user_collection_id['description']
-    new_collection_with_user_collection_id = {
+    new_collection_with_user_collection_id: Dict[str, Union[str, int]] = {
         'title': 'tested_2',
         'description': 'test_description',
         'user_collection_id': 256
@@ -160,9 +164,10 @@ def test_update_collection(client_with_token, create_collection, user):
                                       format='json')
     assert response.status_code == 400
     
-    
 @pytest.mark.django_db
-def test_delete_collection(client_with_token, create_collection, user):
+def test_delete_collection(client_with_token: APIClient,
+                           create_collection: None, 
+                           user: User) -> None:
     response: Response = client_with_token.post(reverse('delete_collection'),
                                         {'id': '1'},
                                         format='json')

@@ -1,7 +1,9 @@
+from typing import List, Tuple
 from django.db import models
 from users.models import User
+
 class Link(models.Model):
-    TYPE_URL_CHOICES = [
+    TYPE_URL_CHOICES: List[Tuple[str]] = [
     ("website", "Website"),
     ("book", "Book"),
     ("article", "Article"),
@@ -21,10 +23,11 @@ class Link(models.Model):
         blank=False
         )
     user_link_id = models.PositiveIntegerField()
-    def save(self, *args, **kwargs):
+    
+    def save(self, *args, **kwargs) -> None:
         if not self.user_link_id:
-            last_link = Link.objects.filter(user=self.user).order_by('user_link_id').last()
-            self.user_link_id = last_link.user_link_id + 1 if last_link else 1
+            last_link: Link = Link.objects.filter(user=self.user).order_by('user_link_id').last()
+            self.user_link_id: int = last_link.user_link_id + 1 if last_link else 1
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -46,9 +49,9 @@ class Collection(models.Model):
         )
     user_collection_id = models.PositiveIntegerField()
     
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         if not self.user_collection_id:
-            last_collection= Collection.objects.filter(user=self.user).order_by('user_collection_id').last()
-            self.user_collection_id = last_collection.user_collection_id + 1 if last_collection else 1
+            last_collection: Collection = Collection.objects.filter(user=self.user).order_by('user_collection_id').last()
+            self.user_collection_id: int = last_collection.user_collection_id + 1 if last_collection else 1
         self.full_clean()
         super().save(*args, **kwargs)

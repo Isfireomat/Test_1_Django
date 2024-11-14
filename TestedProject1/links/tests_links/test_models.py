@@ -1,13 +1,14 @@
 import pytest
-import binascii
-from . import client, standart_user, \
-              standart_link, standart_collection, \
-              registration, user
+from typing import Dict
+from links.tests_links import standart_user, standart_link, registration, \
+                              standart_collection, user
 from links.models import Link, Collection
 from django.core.exceptions import ValidationError
+from users.models import User
 
 @pytest.mark.django_db
-def test_link_model(standart_link, user):
+def test_link_model(standart_link: Dict[str, str], 
+                    user: User) -> None:
     link: Link = Link.objects.create(
         title=standart_link['title'],
         description=standart_link['description'],
@@ -29,7 +30,8 @@ def test_link_model(standart_link, user):
     assert link
 
 @pytest.mark.django_db
-def test_link_with_errors(standart_link, user):
+def test_link_with_errors(standart_link: Dict[str, str], 
+                          user: User) -> None:
     with pytest.raises(ValidationError):
         link: Link = Link.objects.create(
         title='',
@@ -67,7 +69,8 @@ def test_link_with_errors(standart_link, user):
     )
 
 @pytest.mark.django_db
-def test_collection_model(standart_collection, user):
+def test_collection_model(standart_collection: Dict[str, str], 
+                          user: User) -> None:
     collection: Collection = Collection.objects.create(
         title=standart_collection['title'],
         description=standart_collection['description'],
@@ -83,7 +86,8 @@ def test_collection_model(standart_collection, user):
     assert collection
 
 @pytest.mark.django_db
-def test_collection_model_with_errors(standart_collection, user):
+def test_collection_model_with_errors(standart_collection: Dict[str, str], 
+                                      user: User) -> None:
     with pytest.raises(ValidationError):
         collection: Collection = Collection.objects.create(
             description=standart_collection['description'],
