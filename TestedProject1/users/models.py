@@ -6,16 +6,14 @@ class User(models.Model):
     password = models.CharField(max_length=256, blank=False, null=False)
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         self.full_clean()
         if self.password and not self.pk:
-            self.password = make_password(self.password)
+            self.password: str = make_password(self.password)
         super().save(*args, **kwargs)
 
-    def set_password(self, new_password: str):
-        self.password = make_password(new_password)
+    def set_password(self, new_password: str) -> None:
+        self.password: str = make_password(new_password)
         self.save()
-    
-    def __str__(self):
-        return self.email
+
     

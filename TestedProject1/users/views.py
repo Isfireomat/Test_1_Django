@@ -1,22 +1,22 @@
-from datetime import datetime, timedelta, timezone
+from typing import Optional, Dict
+from datetime import datetime, timezone
+from django.contrib.auth.hashers import check_password
 from django.utils.http import urlsafe_base64_decode
 from django.conf import settings
-from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.contrib.auth.hashers import make_password
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User
-from .serializers import UserSerializer, EmailSerializer
-from .utils import verify_access_token, create_token, check_token,\
-                  IsAuthenticatedWithToken, generate_password_reset_link 
 import jwt
-from django.contrib.auth.hashers import check_password
+from users.models import User
+from users.serializers import UserSerializer, EmailSerializer
+from users.utils import create_token, check_token,\
+                        IsAuthenticatedWithToken, generate_password_reset_link 
 
 @api_view(['POST'])
-def registration(request):
-    serializer = UserSerializer(data=request.data)
+def registration(request: Request) -> Response:
+    serializer: UserSerializer = UserSerializer(data=request.data)
     if not serializer.is_valid(): 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     user: User = serializer.create(serializer.validated_data)
@@ -25,10 +25,9 @@ def registration(request):
     user.save()
     return Response({'message':'User created'}, status=status.HTTP_201_CREATED)
 
-# - Пользователь должен иметь возможность аутентифицироваться
 @api_view(['POST'])
-def authenticate(request):
-    serializer = UserSerializer(data=request.data)
+def authenticate(request: Request) -> Response:
+    serializer: UserSerializer = UserSerializer(data=request.data)
     if not serializer.is_valid(): 
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
     user: User = serializer.create(serializer.validated_data)
@@ -41,21 +40,19 @@ def authenticate(request):
                         status=status.HTTP_401_UNAUTHORIZED)
     return Response({'message': 'Authentication successful'}, 
                     status=status.HTTP_200_OK)
-    
-    
+        
 @api_view(['POST'])
-def get_tokens(request):
-    serializer = EmailSerializer(data=request.data)
+def get_tokens(request: Request) -> Response:
+    serializer: EmailSerializer = EmailSerializer(data=request.data)
     if not serializer.is_valid(): 
          return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    access_token = create_token({'email':request.data['email']}, 
+    access_token: str = create_token({'email':request.data['email']}, 
                                 settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_token = create_token({'email':request.data['email']}, 
+    refresh_token: str = create_token({'email':request.data['email']}, 
                                  settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-    response: Response = Response({
-        'access_token': access_token,
-        'refresh_token': refresh_token
-    }, status=status.HTTP_200_OK)
+    response: Response = Response({'access_token': access_token,
+                                   'refresh_token': refresh_token}, 
+                                    status=status.HTTP_200_OK)
     response.set_cookie(
             key='access_token',
             value=f'Bearer {access_token}',
@@ -73,24 +70,27 @@ def get_tokens(request):
     return response    
 
 @api_view(['POST'])
-def refresh_token(request):
-    refresh_token = request.COOKIES.get('refresh_token')
+def refresh_token(request: Request) -> Response:
+    refresh_token: Optional[str] = request.COOKIES.get('refresh_token')
     if not refresh_token:
         return Response({'message':'Invalid refresh token'},
                            status=status.HTTP_400_BAD_REQUEST)
     if not ('Bearer' in refresh_token): 
         return Response({'message':'Invalid refresh token type'},
                         status=status.HTTP_400_BAD_REQUEST)
-    token = refresh_token.split(' ')[1]    
+    refresh_token: str = refresh_token.split(' ')[1]    
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload: Dict[str, str] = jwt.decode(refresh_token, 
+                                             settings.SECRET_KEY, 
+                                             algorithms=[settings.ALGORITHM])
         if not (payload.get('exp') < datetime.now(timezone.utc).timestamp()): 
             Response({'message':'Refresh token has expired'},
                         status=status.HTTP_400_BAD_REQUEST)
-        new_access_token = create_token({'email':payload.get('email')}, expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        response = Response({'new_access_token': new_access_token,
-                                'resfresh_toke': refresh_token
-                            }, status=status.HTTP_200_OK)
+        new_access_token: str = create_token({'email':payload.get('email')}, 
+                                             expires_delta=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        response: Response = Response({'new_access_token': new_access_token,
+                                       'resfresh_toke': refresh_token}, 
+                                       status=status.HTTP_200_OK)
         response.set_cookie(
             key='access_token',
             value=f'Bearer {new_access_token}',
@@ -105,17 +105,19 @@ def refresh_token(request):
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
-def change_password(request):
-    token = request.COOKIES.get("access_token")
-    if not token: 
+def change_password(request: Request) -> Response:
+    access_token: Optional[str] = request.COOKIES.get("access_token")
+    if not access_token: 
         return Response({'message':'Invalid access token'},
                            status=status.HTTP_400_BAD_REQUEST)
-    if not ('Bearer' in token): 
+    if not ('Bearer' in access_token): 
         raise Response({'message':'Invalid access token'},
                            status=status.HTTP_400_BAD_REQUEST)
-    token = token.split(" ")[1] 
-    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    user = User.objects.get(email=payload.get('email'))
+    access_token: str = access_token.split(" ")[1] 
+    payload: Dict[str, str] = jwt.decode(access_token, 
+                         settings.SECRET_KEY, 
+                         algorithms=[settings.ALGORITHM])
+    user: User = User.objects.get(email=payload.get('email'))
     if 'password' not in request.data or not request.data['password']: 
         return Response({"message":"Password is not exists"},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -124,11 +126,11 @@ def change_password(request):
                     status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-def password_reset_request(request):
-    serializer: EmailSerializer = \
-        EmailSerializer(data=request.data)
+def password_reset_request(request: Request) -> Response:
+    serializer: EmailSerializer = EmailSerializer(data=request.data)
     if not serializer.is_valid(): 
-         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+         return Response(serializer.errors, 
+                         status=status.HTTP_400_BAD_REQUEST)
     try:
         user: User = User.objects.get(email=serializer.validated_data['email'])    
         send_mail("Password Reset Request",
@@ -144,10 +146,10 @@ def password_reset_request(request):
                     status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-def password_reset(request, uid, token):
+def password_reset(request: Request, uid: str, token: str) -> Response:
     try:
-        uid = urlsafe_base64_decode(str(uid)).decode('utf-8')
-        user = User.objects.get(pk=uid)
+        uid: str = urlsafe_base64_decode(str(uid)).decode('utf-8')
+        user: str = User.objects.get(pk=uid)
         if not check_token(user, token):
             return Response({'message':'Invalid token'}, 
                             status=status.HTTP_400_BAD_REQUEST)
