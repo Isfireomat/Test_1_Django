@@ -20,14 +20,14 @@ def get_url_information(url: str) -> Dict[str, Optional[str]]:
     }
     soup: BeautifulSoup = BeautifulSoup(response.text, 'html.parser')
     meta_tags: List[Tag] = soup.find_all('meta',  attrs={'name': True})
-    data: Dict[str, str] = {tag["name"]: tag["content"] \
-                            for tag in meta_tags if tag.get("content")}
+    data: Dict[str, str] = {tag['name']: tag['content'] \
+                            for tag in meta_tags if tag.get('content')}
     title_tag: Optional[Tag] = soup.find('title')
     data.update({'title': title_tag.string if title_tag else None})
-    og_meta_tags: List[Tag] = soup.find_all("meta", 
-                                            property=lambda x: x and x.startswith("og:"))
-    og_data: Dict[str, str] = {tag["property"].replace('og:',''): tag["content"] \
-                               for tag in og_meta_tags if tag.get("content")}
+    og_meta_tags: List[Tag] = soup.find_all('meta', 
+                                            property=lambda x: x and x.startswith('og:'))
+    og_data: Dict[str, str] = {tag['property'].replace('og:',''): tag['content'] \
+                               for tag in og_meta_tags if tag.get('content')}
     for key in information.keys():
         information[key] = og_data.get(key, data.get(key, information[key]))
     information['type_url'] = information['type_url'] \

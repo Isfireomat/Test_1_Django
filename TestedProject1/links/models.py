@@ -4,16 +4,16 @@ from users.models import User
 
 class Link(models.Model):
     TYPE_URL_CHOICES: List[Tuple[str]] = [
-    ("website", "Website"),
-    ("book", "Book"),
-    ("article", "Article"),
-    ("music", "Music"),
-    ("video", "Video"),]
+    ('website', 'Website'),
+    ('book', 'Book'),
+    ('article', 'Article'),
+    ('music', 'Music'),
+    ('video', 'Video'),]
     title = models.CharField(max_length=100, blank=False, null=False)
     description = models.CharField(max_length=2000, blank=True)
     page_url = models.URLField(blank=False, null=False)
     image = models.CharField(max_length=500, blank=True,  null=True)
-    type_url = models.CharField(max_length=100 ,choices=TYPE_URL_CHOICES, default="website")
+    type_url = models.CharField(max_length=100 ,choices=TYPE_URL_CHOICES, default='website')
     create_date_time = models.DateTimeField(auto_now_add=True, null=False)
     change_date_time = models.DateTimeField(auto_now=True, null=False)
     user = models.ForeignKey(

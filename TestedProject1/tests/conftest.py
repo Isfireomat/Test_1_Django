@@ -25,20 +25,20 @@ def standart_user() -> Dict[str, str]:
 
 @pytest.fixture
 def standart_link() -> Dict[str, str]:
-    return {'title':"tested",
-            'description':"tested",
-            'page_url':"https://thelastgame.ru/dwarf-fortress/",
+    return {'title':'tested',
+            'description':'tested',
+            'page_url':'https://thelastgame.ru/dwarf-fortress/',
             'image':'picture=',
             'type_url':'website'}
 
 @pytest.fixture
 def standart_link_page_url() -> Dict[str, str]:
-    return {'page_url':"https://thelastgame.ru/dwarf-fortress/"}
+    return {'page_url':'https://thelastgame.ru/dwarf-fortress/'}
 
 @pytest.fixture
 def standart_collection() -> Dict[str, str]:
     return {'title':'test',
-            'description':"tested"}
+            'description':'tested'}
 
 @pytest.fixture
 def standart_collection() -> Dict[str, str]:
