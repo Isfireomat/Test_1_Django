@@ -1,7 +1,8 @@
 from typing import Dict
 from django.core.exceptions import ValidationError
 import pytest
-from TestedProject1.tests.conftest import client, standart_user, standart_link, standart_collection
+from conftest import client, standart_user,\
+                                          standart_link, standart_collection
 from users.models import User
 
 @pytest.mark.django_db
@@ -14,7 +15,7 @@ def test_user_model(standart_user: Dict[str, str]) -> None:
     old_password: str = user.password
     user.save()
     assert old_password == user.password
-    user.set_password("1234567890")
+    user.set_password('1234567890')
     assert old_password != user.password
     
     

@@ -1,1 +1,1 @@
-from .url_utils import get_url_information
+from links.utils.url_utils import get_url_information
