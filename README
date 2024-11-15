@@ -3,4 +3,4 @@ Build and run:
 Make_migrations:
     docker-compose exec app poetry run python manage.py migrate
 Test:
-    docker-compose exec app poetry run pytest tests/tests_links/test_link_views.py -s
+    docker-compose exec app poetry run pytest
