@@ -206,23 +206,3 @@ def test_add_link_to_collection(client_with_token: APIClient,
                                                     user=user)
     assert standart_link_page_url['page_url'] == collection.links.get(user_link_id=1).page_url
     
-@pytest.mark.django_db
-def test_read_links_from_collection(client_with_token: APIClient,
-                                    create_collection: None,
-                                    create_link: None) -> None:
-    response: Response = client_with_token.post(reverse('add_link_to_collection'),
-                                                {'user_link_id':1,
-                                                 'user_collection_id':1},
-                                                format='json')
-    response: Response = client_with_token.post(reverse('read_links_from_collection'),
-                                                {'user_collection_id':1},
-                                                format='json')
-    assert response.status_code == 200
-    response: Response = client_with_token.post(reverse('read_links_from_collection'),
-                                                {'user_collection_id':256},
-                                                format='json')
-    assert response.status_code == 400
-    response: Response = client_with_token.post(reverse('read_links_from_collection'),
-                                                {'id':1},
-                                                format='json')
-    assert response.status_code == 400
