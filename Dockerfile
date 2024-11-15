@@ -7,16 +7,14 @@ RUN apt-get update && apt-get install -y \
     
 RUN pip install poetry 
 
-COPY poetry.lock pyproject.toml .
+COPY poetry.lock pyproject.toml ./
 
 RUN poetry install
 
-WORKDIR /app
+WORKDIR ./app
 
 COPY TestedProject1 .     
 
-RUN pytest
-
 EXPOSE 8000
 
-CMD gunicorn -c gunicorn.conf.py TestedProject1.wsgi:application
+CMD poetry run gunicorn --reload -c gunicorn.conf.py core.wsgi:application
