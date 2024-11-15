@@ -212,24 +212,3 @@ def add_link_to_collection(request: Request) -> Response:
                         status=status.HTTP_400_BAD_REQUEST)
     return Response({'message':'link add to collection'}, 
                     status=status.HTTP_201_CREATED)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticatedWithToken])
-def read_links_from_collection(request: Request) -> Response:
-    serializer: CollectionIdSerializer = CollectionIdSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, 
-                        status=status.HTTP_400_BAD_REQUEST)
-    try:
-        collection: Collection = Collection.objects.get(
-            user_collection_id=serializer.validated_data['user_collection_id'],
-            user=request.user)
-        collection: Dict[str, Union[str, int, List]] = model_to_dict(collection)
-    except Collection.DoesNotExist:
-        return Response({'Error':'Incorect collection'}, 
-                        status=status.HTTP_400_BAD_REQUEST)
-    set_cashe(user_id=request.user.id,
-              identifier=f,
-              item=link)
-    return Response({'links':list(collection.links.all().values())},
-                    status=status.HTTP_200_OK)
