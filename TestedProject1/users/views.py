@@ -9,6 +9,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 import jwt
+from users.tasks import send_mail_password_reset_request
 from users.models import User
 from users.serializers import UserSerializer, EmailSerializer
 from users.utils import create_token, check_token,\
@@ -146,6 +147,17 @@ def change_password(request: Request) -> Response:
     return Response({'message':'Password changed'},
                     status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+def email(request):
+    send_mail_password_reset_request.delay(
+                    subject="Password Reset Request",
+                    message=f"""Click the link to reset your password: 
+                   \n""",
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=['dfdfgfgf666@gmail.com']
+         )
+    return Response({},status=status.HTTP_200_OK)
+
 @api_view(['POST'])
 def password_reset_request(request: Request) -> Response:
     serializer: EmailSerializer = EmailSerializer(data=request.data)
@@ -154,12 +166,13 @@ def password_reset_request(request: Request) -> Response:
                          status=status.HTTP_400_BAD_REQUEST)
     try:
         user: User = User.objects.get(email=serializer.validated_data['email'])    
-        send_mail("Password Reset Request",
-                    f"""Click the link to reset your password: 
+        send_mail_password_reset_request.delay(
+                    subject="Password Reset Request",
+                    message=f"""Click the link to reset your password: 
                     {generate_password_reset_link(request, user)}\n""",
-                    settings.EMAIL_HOST_USER,
-                    [user.email],
-                    fail_silently=False)
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=['dfdfgfgf666@gmail.com']
+         )
     except User.DoesNotExist:
         return Response({"message":"User does not exist"}, 
                         status=status.HTTP_400_BAD_REQUEST)

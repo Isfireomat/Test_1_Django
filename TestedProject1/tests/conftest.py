@@ -1,4 +1,6 @@
 from typing import Generator, Dict
+import subprocess
+import time
 from django.conf import settings
 from django.db import connections
 from django.core.management import call_command
@@ -8,6 +10,14 @@ from rest_framework.test import APIClient
 from rest_framework.response import Response
 import pytest
 from users.models import User
+
+@pytest.fixture(scope='session', autouse=True)
+def celery_eager():
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    yield
+    settings.CELERY_TASK_ALWAYS_EAGER = False
+    settings.CELERY_TASK_EAGER_PROPAGATES = False    
 
 @pytest.fixture(scope='session')
 def db_setup() -> Generator[BaseDatabaseWrapper, None, None]:
