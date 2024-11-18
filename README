@@ -1,37 +1,48 @@
-В корневой папке (там где и docker-compose.yml) нужно создать .env со следующими пунктами:
-    EMAIL_HOST = smtp.mail.ru
-    EMAIL_PORT = 465
-    EMAIL_USE_SSL = True
-    EMAIL_HOST_USER = 
-    EMAIL_HOST_PASSWORD = 
-    DB_USER = postgres
-    DB_PASS = 124567890
-    DB_NAME = MyDB
-    DB_PORT = 5432
-    SECRET_KEY = 00987654322234567890  
-    REDIS_PORT = 6379
-    REDIS_DB = 0
-(Доступные значения опциональны и существуют тут лишь для вашего удобства)
 
-Далее нужно запускать все команды в следующей последовательности:
-    Build and up:
-        docker-compose up --build
-    Make migrations:
-        docker-compose exec app poetry run python manage.py migrate
-    Make celery worker:
-        docker-compose exec app poetry run celery -A core worker --loglevel=info --concurrency=4
-    Test:
-        docker-compose exec app poetry run pytest
+Задания можно найти в файле testovoe-zadanie-na-pozitsiiu-junior-python-de.md
 
-Чтобы остановить контейнер используйте:
-    Down: 
-        docker-compose down
+Задание 1:
+    В корневой папке (там где и docker-compose.yml) нужно создать .env со следующими пунктами:
+        EMAIL_HOST = smtp.mail.ru
+        EMAIL_PORT = 465
+        EMAIL_USE_SSL = True
+        EMAIL_HOST_USER = 
+        EMAIL_HOST_PASSWORD = 
+        DB_USER = postgres
+        DB_PASS = 124567890
+        DB_NAME = MyDB
+        DB_PORT = 5432
+        SECRET_KEY = 00987654322234567890  
+        REDIS_PORT = 6379
+        REDIS_DB = 0
+    (Доступные значения опциональны и существуют тут лишь для вашего удобства)
 
-Примечания:
-    В документации для авторизации нужно:
-        Зарегестрироваться через api/registration/
-        Аутентифицироваться через api/authenticate/
-        Получить токены авторизации через api/get_tokens/
-    Всё делается через печеньки
+    Далее нужно запускать все команды в следующей последовательности:
+        Build and up:
+            docker-compose up --build
+        Make migrations:
+            docker-compose exec app poetry run python manage.py migrate
+        Make celery worker:
+            docker-compose exec app poetry run celery -A core worker --loglevel=info --concurrency=4
+        Test:
+            docker-compose exec app poetry run pytest
+
+    Чтобы остановить контейнер используйте:
+        Down: 
+            docker-compose down
+
+    Примечания:
+        В документации для авторизации нужно:
+            Зарегестрироваться через api/registration/
+            Аутентифицироваться через api/authenticate/ 
+            Получить токены авторизации через api/get_tokens/
+        Всё делается через печеньки
     
-Задание можно найти в файле testovoe-zadanie-na-pozitsiiu-junior-python-de.md
+Задание 2:
+    Откройте папку TestedProject2
+    Откройте test.db и введите следующую команду:
+        SELECT users.id, users.username, users.registration_date, COUNT(links.id) as links_count FROM users LEFT JOIN  links ON links.user_id = users.id GROUP BY users.id ORDER BY links_count DESC, users.registration_date ASC LIMIT 10;
+    Генератор:
+        create sqlite.py
+    Фотография того, что вывелось:
+        output.png

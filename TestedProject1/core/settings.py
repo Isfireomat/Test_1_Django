@@ -25,7 +25,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = 'HS256'  
 ACCESS_TOKEN_EXPIRE_MINUTES = timedelta(minutes=30) 
 REFRESH_TOKEN_EXPIRE_MINUTES = timedelta(days=7)
-TEMP_TOKEN_EXPIRE_MINUTES = timedelta(seconds=30)
+TEMP_TOKEN_EXPIRE_MINUTES = timedelta(minutes=30)
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
