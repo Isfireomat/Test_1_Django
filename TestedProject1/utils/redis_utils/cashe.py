@@ -1,7 +1,7 @@
 from typing import Optional, Union, Dict, List
 import pickle
 from redis import Redis
-from utils.redis_utils import get_redis_client
+from core.redis import get_redis_client
 
 def set_cashe_item(key: Union[str, int], 
                    item: Union[Dict, List], 

@@ -1,7 +1,7 @@
 from typing import Optional, Union, Dict, List
 from redis import Redis
-from utils.redis_utils import set_cashe_item, get_cashe_item, \
-                              get_redis_client
+from core.redis import get_redis_client
+from utils.redis_utils import set_cashe_item, get_cashe_item
 
 def set_cashe(user_id: Union[str, int],
             identifier: Union[str, int], 

@@ -129,8 +129,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Название вашего API',
-    'DESCRIPTION': 'Описание API',
+    'TITLE': 'Тестовое API (Пользователь-Ссылки-Колеекции)',
+    'DESCRIPTION': 'Тестовое API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
