@@ -18,6 +18,4 @@ COPY TestedProject1 .
 
 EXPOSE 8000
 
-RUN useradd -m -u 50 celeryuser
-
 CMD poetry run gunicorn --reload -c gunicorn.conf.py core.wsgi:application

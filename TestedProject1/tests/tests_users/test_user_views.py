@@ -18,18 +18,11 @@ def test_registration_registration(client: APIClient,
                                      standart_user, 
                                      format='json')
     assert response.status_code == 201
-
-@pytest.mark.django_db
-def test_user_registration_with_user_exists(client: APIClient, 
-                                            standart_user: Dict[str, str]) -> None:
     client.post(reverse('registration'), standart_user, format='json')
     response: Response = client.post(reverse('registration'), 
                                      standart_user, 
                                      format='json')
     assert response.status_code == 400
-
-@pytest.mark.django_db
-def test_user_registration_without_valid_data(client: APIClient) -> None:
     response: Response = client.post(reverse('registration'), 
                                      {'email':'tested@gmail.com'}, format='json')
     assert response.status_code == 400
@@ -42,40 +35,10 @@ def test_user_authenticate(client: APIClient,
                                      standart_user, format='json')
     assert response.status_code == 200
     assert response.cookies.get('authenticate_token') 
-
-@pytest.mark.django_db
-def test_user_authenticate_without_email(client: APIClient, 
-                                         registration: None, 
-                                         standart_user: Dict[str, str]) -> None:
-    response: Response = client.post(reverse('authenticate'), 
-                                     {'email':'test', 'password':standart_user['password']}, 
-                                     format='json')
-    assert response.status_code == 400
-
-
-@pytest.mark.django_db
-def test_user_authenticate_without_valid_email(client: APIClient, 
-                                               registration: None, 
-                                               standart_user: Dict[str, str]) -> None:
     response: Response = client.post(reverse('authenticate'), 
                                      {'email':'test', 'password':standart_user['password']}, 
                                      format='json')
     assert response.status_code == 401
-
-
-@pytest.mark.django_db
-def test_user_authenticate_without_email(client: APIClient,
-                                         registration: None,
-                                         standart_user: Dict[str, str]) -> None:
-    response: Response = client.post(reverse('authenticate'), 
-                                     {'email':standart_user['email'], 'password':'test'}, 
-                                     format='json')
-    assert response.status_code == 401
-
-@pytest.mark.django_db
-def test_user_authenticate_without_email(client: APIClient,
-                                         registration: None, 
-                                         standart_user: Dict[str, str]):
     response: Response = client.post(reverse('authenticate'), 
                                      {'password':standart_user['password']}, 
                                      format='json')
@@ -94,24 +57,9 @@ def test_get_tokens(client: APIClient,
     assert 'refresh_token' in response.data.keys()
     assert 'access_token' in response.cookies
     assert 'refresh_token' in response.cookies
-
-@pytest.mark.django_db
-def test_get_tokens_without_authenticate_token(client: APIClient,
-                                         registration: None) -> None:
+    client.cookies['authenticate_token'] = ''
     response: Response = client.post(reverse('get_tokens'))
     assert response.status_code == 401
-    
-@pytest.mark.django_db
-def test_refresh_client(client: APIClient, 
-                        registration: None) -> None:
-    response: Response = client.post(reverse('refresh_token'))
-    assert 'access_token' not in response.cookies
-    refresh_token: str = create_token({'email':'test@gmail.com'}, 
-                                      settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-    client.cookies['refresh_token'] = f'Bearer {refresh_token}'
-    response: Response = client.post(reverse('refresh_token'))
-    assert response.status_code == 200
-    assert 'access_token' in response.cookies
     
 @pytest.mark.django_db
 def test_refresh_client(client: APIClient, 

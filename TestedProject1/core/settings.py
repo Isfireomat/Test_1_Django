@@ -53,6 +53,8 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_ALWAYS_EAGER = False
 CELERY_TASK_EAGER_PROPAGATES = False  
 
+
+DEFAULT_SCHEMA_CLASS = 'drf_spectacular.openapi.AutoSchema'
 # EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'core',
     'users',
     'links',
@@ -121,6 +124,16 @@ DATABASES = {
 }
 
 
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Название вашего API',
+    'DESCRIPTION': 'Описание API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

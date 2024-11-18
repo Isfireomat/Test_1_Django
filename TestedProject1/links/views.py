@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
+from drf_spectacular.utils import extend_schema
 from users.utils import IsAuthenticatedWithToken
 from utils.redis_utils import set_cashe, get_cashe
 from links.utils import get_url_information
@@ -12,6 +13,16 @@ from links.serializers import LinkIdSerializer, CollectionIdSerializer,\
                          LinkSerializer, CollectionSerializer, \
                          LinkCollectionIdSerializer
 
+@extend_schema(
+    summary="Создание ссылки",
+    description="Эндпоинт для создание ссылки пользователем.",
+    request=LinkSerializer, 
+    responses={
+        201: {"description": "Ссылка успешно создана."},
+        400: {"description": "Некорректные данные или ошибка создания ссылки."},
+    },
+    tags=["Ссылки"], 
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def create_link(request: Request) -> Response:
@@ -34,6 +45,16 @@ def create_link(request: Request) -> Response:
     return Response({'message':'link created'}, 
                     status=status.HTTP_201_CREATED)
 
+@extend_schema(
+    summary="Чтение ссылки",
+    description="Возвращает данные ссылки по её идентификатору. Использует кеш, если данные доступны.",
+    request=LinkIdSerializer,
+    responses={
+        200: {"description": "Данные ссылки успешно получены."},
+        400: {"description": "Ссылка не существует или ошибка данных."},
+    },
+    tags=["Ссылки"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def read_link(request: Request) -> Response:
@@ -56,6 +77,16 @@ def read_link(request: Request) -> Response:
     return Response({'link': link.values().first()}, 
                     status=status.HTTP_200_OK)    
 
+@extend_schema(
+    summary="Обновление ссылки",
+    description="Обновляет существующую ссылку для текущего пользователя на основе переданных данных.",
+    request=LinkSerializer,
+    responses={
+        201: {"description": "Ссылка успешно обновлена."},
+        400: {"description": "Некорректные данные или ошибка обновления."},
+    },
+    tags=["Ссылки"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def update_link(request: Request) -> Response:
@@ -85,6 +116,16 @@ def update_link(request: Request) -> Response:
     return Response({'message':'link updated', 'link': link}, 
                     status=status.HTTP_201_CREATED)
 
+@extend_schema(
+    summary="Удаление ссылки",
+    description="Удаляет существующую ссылку пользователя на основе идентификатора.",
+    request=LinkIdSerializer,
+    responses={
+        200: {"description": "Ссылка успешно удалена."},
+        400: {"description": "Ссылка не существует или ошибка данных."},
+    },
+    tags=["Ссылки"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def delete_link(request: Request) -> Response:
@@ -101,6 +142,16 @@ def delete_link(request: Request) -> Response:
     return Response({'message': 'link deleted'}, 
                     status=status.HTTP_200_OK)  
 
+@extend_schema(
+    summary="Создание коллекции",
+    description="Создаёт новую коллекцию для текущего пользователя.",
+    request=CollectionSerializer,
+    responses={
+        201: {"description": "Коллекция успешно создана."},
+        400: {"description": "Ошибка валидации данных."},
+    },
+    tags=["Коллекции"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def create_collection(request: Request) -> Response:
@@ -120,6 +171,16 @@ def create_collection(request: Request) -> Response:
     return Response({'message':'collection created'},
                     status=status.HTTP_201_CREATED)
 
+@extend_schema(
+    summary="Чтение коллекции",
+    description="Возвращает данные коллекции по её идентификатору. Использует кеш, если данные доступны.",
+    request=CollectionIdSerializer,
+    responses={
+        200: {"description": "Данные коллекции успешно получены."},
+        400: {"description": "Коллекция не существует или ошибка данных."},
+    },
+    tags=["Коллекции"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def read_collection(request: Request) -> Response:
@@ -143,6 +204,16 @@ def read_collection(request: Request) -> Response:
     return Response({'collection': collection.values().first()}, 
                     status=status.HTTP_200_OK)    
 
+@extend_schema(
+    summary="Обновление коллекции",
+    description="Обновляет существующую коллекцию пользователя на основе переданных данных.",
+    request=CollectionSerializer,
+    responses={
+        201: {"description": "Коллекция успешно обновлена."},
+        400: {"description": "Некорректные данные или ошибка обновления."},
+    },
+    tags=["Коллекции"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def update_collection(request: Request) -> Response:
@@ -171,6 +242,16 @@ def update_collection(request: Request) -> Response:
     return Response({'message':'collection updated', 'collection': collection}, 
                     status=status.HTTP_201_CREATED)
 
+@extend_schema(
+    summary="Удаление коллекции",
+    description="Удаляет коллекцию пользователя по её идентификатору.",
+    request=CollectionIdSerializer,
+    responses={
+        200: {"description": "Коллекция успешно удалена."},
+        400: {"description": "Коллекция не существует или ошибка данных."},
+    },
+    tags=["Коллекции"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def delete_collection(request: Request) -> Response:
@@ -187,6 +268,16 @@ def delete_collection(request: Request) -> Response:
     return Response({'message': 'collection deleted'}, 
                     status=status.HTTP_200_OK) 
 
+@extend_schema(
+    summary="Добавление ссылки в коллекцию",
+    description="Добавляет существующую ссылку пользователя в указанную коллекцию.",
+    request=LinkCollectionIdSerializer,
+    responses={
+        201: {"description": "Ссылка успешно добавлена в коллекцию."},
+        400: {"description": "Ссылка или коллекция не существует, либо ошибка данных."},
+    },
+    tags=["Ссылки и коллекции"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedWithToken])
 def add_link_to_collection(request: Request) -> Response:

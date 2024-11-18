@@ -39,7 +39,7 @@ def standart_link() -> Dict[str, str]:
     return {'title':'tested',
             'description':'tested',
             'page_url':'https://thelastgame.ru/dwarf-fortress/',
-            'image':'picture=',
+            'image':'https://thelastgame.ru/wp-content/uploads/2020/03/header-146.jpg',
             'type_url':'website'}
 
 @pytest.fixture

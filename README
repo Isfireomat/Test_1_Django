@@ -1,8 +1,10 @@
-Build and run:
+Build and up:
     docker-compose up --build
-Make_migrations:
+Make migrations:
     docker-compose exec app poetry run python manage.py migrate
 Make celery worker:
     docker-compose exec app poetry run celery -A core worker --loglevel=info --concurrency=4
 Test:
     docker-compose exec app poetry run pytest
+Down: 
+    docker-compose down

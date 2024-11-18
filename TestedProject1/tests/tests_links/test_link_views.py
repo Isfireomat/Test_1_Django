@@ -18,6 +18,9 @@ def test_create_link(client_with_token: APIClient,
                                       format='json')
     assert response.status_code == 201
     response: Response = client_with_token.post(reverse('create_link'), 
+                                      standart_link_page_url, 
+                                      format='json')
+    response: Response = client_with_token.post(reverse('create_link'), 
                                       {'url':standart_link_page_url['page_url']}, 
                                       format='json')
     assert response.status_code == 400

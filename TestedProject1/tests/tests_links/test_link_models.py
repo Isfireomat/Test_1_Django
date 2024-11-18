@@ -20,18 +20,6 @@ def test_link_model(standart_link: Dict[str, str],
     assert link
     assert link.create_date_time
     assert link.change_date_time
-    link: Link = Link.objects.create(
-        title=standart_link['title'],
-        page_url=standart_link['page_url'],
-        image=standart_link['image'],
-        type_url=standart_link['type_url'],
-        user=user 
-    )
-    assert link
-
-@pytest.mark.django_db
-def test_link_with_errors(standart_link: Dict[str, str], 
-                          user: User) -> None:
     with pytest.raises(ValidationError):
         link: Link = Link.objects.create(
         title='',
@@ -80,14 +68,10 @@ def test_collection_model(standart_collection: Dict[str, str],
     assert collection.create_date_time
     assert collection.change_date_time
     collection: Collection = Collection.objects.create(
-        title=standart_collection['title'],
+        title='tested title',
         user=user 
     )
     assert collection
-
-@pytest.mark.django_db
-def test_collection_model_with_errors(standart_collection: Dict[str, str], 
-                                      user: User) -> None:
     with pytest.raises(ValidationError):
         collection: Collection = Collection.objects.create(
             description=standart_collection['description'],
