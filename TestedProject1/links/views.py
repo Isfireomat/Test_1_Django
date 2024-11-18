@@ -42,7 +42,7 @@ def create_link(request: Request) -> Response:
     set_cashe(user_id=request.user.id,
             identifier=link['user_link_id'],
             item=link)
-    return Response({'message':'link created'}, 
+    return Response({'message':'link created', 'link':link}, 
                     status=status.HTTP_201_CREATED)
 
 @extend_schema(
@@ -168,7 +168,7 @@ def create_collection(request: Request) -> Response:
     set_cashe(user_id=request.user.id,
             identifier=collection['user_collection_id'],
             item=collection)
-    return Response({'message':'collection created'},
+    return Response({'message':'collection created', 'collection':collection},
                     status=status.HTTP_201_CREATED)
 
 @extend_schema(

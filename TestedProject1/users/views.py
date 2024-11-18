@@ -63,7 +63,7 @@ def authenticate(request: Request) -> Response:
                         status=status.HTTP_401_UNAUTHORIZED)
     authenticate_token: str = create_token({'email': user.email}, 
                                    settings.TEMP_TOKEN_EXPIRE_MINUTES)
-    response: Response = Response({'message': 'Authentication successful'}, 
+    response: Response = Response({'authenticate_token': authenticate_token}, 
                                   status=status.HTTP_200_OK)
     response.set_cookie(
         key='authenticate_token',
