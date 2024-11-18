@@ -30,7 +30,10 @@
     Чтобы остановить контейнер используйте:
         Down: 
             docker-compose down
-
+    
+    Документацию swagger можно найти по ссылке:
+        http://localhost:8000/api/schema/swagger-ui/
+        
     Примечания:
         В документации для авторизации нужно:
             Зарегестрироваться через api/registration/
